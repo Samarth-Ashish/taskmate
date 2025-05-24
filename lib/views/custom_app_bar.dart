@@ -14,6 +14,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String customTitle;
   final bool? addText;
   final bool? isCenterTitle;
+  final GestureTapCallback? onTap;
 
   const CustomAppBar({
     required this.customTitle,
@@ -21,6 +22,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.actionIcon,
     this.addText,
     this.isCenterTitle,
+    this.onTap,
     super.key,
   });
 
@@ -55,14 +57,18 @@ class CustomAppBarState extends State<CustomAppBar> {
       actions: [
         if (_icon != null)
           GestureDetector(
-            onTap: () {
-              setState(() {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => _pageToPush!),
-                );
-              });
-            },
+            onTap:
+                widget.onTap ??
+                () {
+                  if (_pageToPush != null) {
+                    setState(() {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => _pageToPush!),
+                      );
+                    });
+                  }
+                },
             child: Container(
               padding: EdgeInsets.all(4),
               decoration: BoxDecoration(

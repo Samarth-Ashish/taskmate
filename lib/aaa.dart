@@ -9,12 +9,12 @@
 //   Summary({required this.medications, required this.sleepTime, required this.learningTime});
 // }
 
-// class Alarm {
+// class AlarmModel {
 //   final String label;
 //   final String time;
 //   final bool repeatsDaily;
 
-//   Alarm({required this.label, required this.time, this.repeatsDaily = true});
+//   AlarmModel({required this.label, required this.time, this.repeatsDaily = true});
 // }
 
 
@@ -22,7 +22,7 @@
 // import '../models/home_model.dart';
 
 // class HomeController {
-//   Alarm alarm = Alarm(label: "Wake Up", time: "6:30 AM");
+//   AlarmModel alarm = AlarmModel(label: "Wake Up", time: "6:30 AM");
 //   Summary summary = Summary(medications: 2, sleepTime: "10:00 PM to 6:00 AM", learningTime: "1 hour scheduled");
 //   List<Task> quickActions = [
 //     Task(title: "Take Vit–D", time: "8 AM"),
@@ -77,7 +77,7 @@
 //                 ],
 //               ),
 //               const SizedBox(height: 20),
-//               _sectionTitle(Icons.alarm, 'Next Alarm'),
+//               _sectionTitle(Icons.alarm, 'Next AlarmModel'),
 //               _alarmCard(controller.alarm),
 //               const SizedBox(height: 16),
 //               _sectionTitle(Icons.list, "Today's Summary"),
@@ -105,7 +105,7 @@
 //     );
 //   }
 
-//   Widget _alarmCard(Alarm alarm) {
+//   Widget _alarmCard(AlarmModel alarm) {
 //     return Card(
 //       child: ListTile(
 //         title: Text(alarm.label),

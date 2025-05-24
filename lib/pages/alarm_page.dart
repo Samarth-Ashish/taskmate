@@ -12,23 +12,20 @@ class AlarmPage extends StatefulWidget {
 }
 
 class _AlarmPageState extends State<AlarmPage> {
-  // Sample data - in a real app, this would come from a database
-  final List<Alarm> _alarms = [
-    Alarm(
-      id: 1,
-      title: 'Morning Alarm',
-      alarmTime: const TimeOfDay(hour: 7, minute: 0),
-      isEnabled: true,
-      alarmWeekdays: [1, 2, 3, 4, 5], // Monday to Friday
-    ),
-    Alarm(
-      id: 2,
-      title: 'Workout',
-      alarmTime: const TimeOfDay(hour: 18, minute: 30),
-      isEnabled: true,
-      alarmWeekdays: [2, 4, 6], // Tuesday, Thursday, Saturday
-    ),
-  ];
+  late List<AlarmModel> _alarms = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlarms();
+  }
+
+  Future<void> _loadAlarms() async {
+    final alarms = await AlarmModel.loadAlarms();
+    setState(() {
+      _alarms = alarms;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,18 +66,25 @@ class _AlarmPageState extends State<AlarmPage> {
                   padding: const EdgeInsets.only(right: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                onDismissed: (direction) {
+                onDismissed: (direction) async {
+                  // Perform async work first
+                  await AlarmModel.removeAlarm(alarm.id!);
+                  _alarms.removeWhere((a) => a.id == alarm.id);
+
+                  // Then update the state synchronously
                   setState(() {
-                    _alarms.removeAt(index);
+                    alarm.isEnabled = false;
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Alarm "${alarm.title}" deleted'),
+                      content: Text('AlarmModel "${alarm.title}" deleted'),
                       action: SnackBarAction(
                         label: 'UNDO',
-                        onPressed: () {
+                        onPressed: () async {
+                          await AlarmModel.addAlarm(alarm);
+                          _alarms.insert(index, alarm);
                           setState(() {
-                            _alarms.insert(index, alarm);
+                            alarm.isEnabled = true;
                           });
                         },
                       ),
@@ -95,77 +99,100 @@ class _AlarmPageState extends State<AlarmPage> {
                       horizontal: 16,
                       vertical: 4,
                     ),
-                    child: ListTile(
-                      // contentPadding: const EdgeInsets.symmetric(
-                      //   horizontal: 16,
-                      //   vertical: 8,
-                      // ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Text(
-                              //   _formatTime(
-                              //     alarm.alarmTime ??
-                              //         const TimeOfDay(hour: 0, minute: 0),
-                              //   ),
-                              //   style: const TextStyle(
-                              //     fontSize: 24,
-                              //     fontWeight: FontWeight.bold,
-                              //   ),
-                              // ),
-                              manjari(
-                                _formatTime(
-                                  alarm.alarmTime ??
-                                      const TimeOfDay(hour: 0, minute: 0),
-                                ),
-                                fontSize: 28,
-                              ),
-                              manjari(
-                                alarm.title ?? ' ',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          Switch(
-                            value: alarm.isEnabled ?? false,
-                            activeColor: Color.fromARGB(255, 113, 186, 243),
-                            activeTrackColor: Color(0xFF1776BF),
-                            inactiveTrackColor: Color(0xFF86D0FF),
-                            onChanged: (bool value) {
-                              setState(() {
-                                _alarms[index] = alarm..isEnabled = value;
-                              });
-                            },
-                          ),
+                    shadowColor: Colors.blue,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          // Inner shadow
+                          // BoxShadow(
+                          //   color: Colors.blue.withOpacity(0.3),
+                          //   spreadRadius: 1,
+                          //   blurRadius: 5,
+                          //   offset: Offset(0, 2),
+                          // ),
+                          // Outer shadow
+                          // BoxShadow(
+                          //   color: Colors.blue.withOpacity(0.1),
+                          //   spreadRadius: -5,
+                          //   blurRadius: 2,
+                          //   offset: Offset(10, 10),
+                          // ),
                         ],
                       ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Divider(color: Color(0xFF6FC0F4), thickness: 1.5),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              manjari(
-                                _formatWeekdays(alarm.alarmWeekdays ?? []),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              manjari(
-                                "Edit",
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ],
-                          ),
-                        ],
+                      child: ListTile(
+                        // contentPadding: const EdgeInsets.symmetric(
+                        //   horizontal: 16,
+                        //   vertical: 8,
+                        // ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Text(
+                                //   _formatTime(
+                                //     alarm.alarmTime ??
+                                //         const TimeOfDay(hour: 0, minute: 0),
+                                //   ),
+                                //   style: const TextStyle(
+                                //     fontSize: 24,
+                                //     fontWeight: FontWeight.bold,
+                                //   ),
+                                // ),
+                                manjari(
+                                  _formatTime(
+                                    alarm.alarmTime ??
+                                        const TimeOfDay(hour: 0, minute: 0),
+                                  ),
+                                  fontSize: 28,
+                                ),
+                                manjari(
+                                  alarm.title ?? ' ',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Switch(
+                              value: alarm.isEnabled ?? false,
+                              activeColor: Color.fromARGB(255, 113, 186, 243),
+                              activeTrackColor: Color(0xFF1776BF),
+                              inactiveTrackColor: Color(0xFF86D0FF),
+                              onChanged: (bool value) {
+                                setState(() {
+                                  alarm.isEnabled = value;
+                                  AlarmModel.setAlarmEnabled(alarm.id!, value);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Divider(color: Color(0xFF6FC0F4), thickness: 1.5),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                manjari(
+                                  _formatWeekdays(alarm.alarmWeekdays ?? []),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                manjari(
+                                  "Edit",
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

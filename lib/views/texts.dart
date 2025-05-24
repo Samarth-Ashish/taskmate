@@ -35,10 +35,31 @@ Text lilitaOneSmall() {
   );
 }
 
-Text manjari(String string, {double fontSize = 30, FontWeight fontWeight = FontWeight.w900, Color color = const Color.fromARGB(255, 0, 113, 170)}) {
+Text manjari(
+  String string, {
+  double fontSize = 30,
+  FontWeight fontWeight = FontWeight.w900,
+  Color color = const Color.fromARGB(255, 0, 113, 170),
+}) {
   return Text(
     string,
     style: GoogleFonts.manjari(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+    ),
+  );
+}
+
+Text mada(
+  String string, {
+  double fontSize = 30,
+  FontWeight fontWeight = FontWeight.w500,
+  Color color = const Color.fromARGB(255, 5, 131, 195),
+}) {
+  return Text(
+    string,
+    style: GoogleFonts.mada(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
