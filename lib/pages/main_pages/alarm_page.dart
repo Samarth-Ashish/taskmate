@@ -7,19 +7,19 @@ class AlarmPage extends StatefulWidget {
   const AlarmPage({super.key});
 
   @override
-  State<AlarmPage> createState() => _AlarmPageState();
+  State<AlarmPage> createState() => AlarmPageState();
 }
 
-class _AlarmPageState extends State<AlarmPage> {
+class AlarmPageState extends State<AlarmPage> {
   late List<Alarm> _alarms = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAlarms();
+    loadAlarms();
   }
 
-  Future<void> _loadAlarms() async {
+  Future<void> loadAlarms() async {
     final alarms = await Alarm.loadAlarms();
     setState(() {
       _alarms = alarms;

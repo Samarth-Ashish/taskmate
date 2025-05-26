@@ -17,20 +17,30 @@ class DefaultNavPage extends StatefulWidget {
   State<DefaultNavPage> createState() => _DefaultNavPageState();
 }
 
+final GlobalKey<HomePageState> _homePageKey = GlobalKey<HomePageState>();
+final GlobalKey<AlarmPageState> _alarmPageKey = GlobalKey<AlarmPageState>();
+final GlobalKey<MedicinePageState> _medicinePageKey =
+    GlobalKey<MedicinePageState>();
+final GlobalKey<LearningPageState> _learningPageKey =
+    GlobalKey<LearningPageState>();
+
 class _DefaultNavPageState extends State<DefaultNavPage> {
   int _selectedIndex = 0;
 
   final List<Widget> pages = [
-    HomePage(),
-    AlarmPage(),
+    HomePage(key: _homePageKey),
+    AlarmPage(key: _alarmPageKey),
     SleepPage(),
-    MedicinePage(),
-    LearningPage(),
+    MedicinePage(key: _medicinePageKey),
+    LearningPage(key: _learningPageKey),
   ];
 
   late final List<PreferredSizeWidget> _appBars;
 
   void _onTappingNavBarItem(int index) {
+    if (index == 0) {
+      _homePageKey.currentState?.refresh();
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -50,6 +60,15 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         pageToPush: AddAlarmPage(),
         actionIcon: Icons.alarm_add,
         customTitle: 'Alarms',
+        // isCenterTitle: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddAlarmPage()),
+          ).then((_) {
+            _alarmPageKey.currentState?.loadAlarms();
+          });
+        },
       ),
       CustomAppBar(
         // pageToPush: SleepStatsPage(),
@@ -61,45 +80,68 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         pageToPush: AddMedicinesPage(),
         actionIcon: Icons.medication,
         customTitle: 'Medicine',
-        // onTap: () {
-        //   setState(() {
-        //     debugPrint('State updated after returning from AddMedicinesPage');
-        //   });
-        // },
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddMedicinesPage()),
+          ).then((_) {
+            _medicinePageKey.currentState?.loadMedicines();
+          });
+        },
       ),
       CustomAppBar(
         pageToPush: AddLearningPage(),
         actionIcon: Icons.book,
         customTitle: 'Learning',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddLearningPage()),
+          ).then((_) {
+            _learningPageKey.currentState?.loadSubjects();
+          });
+        },
       ),
     ];
   }
 
-  //
-
   @override
   Widget build(BuildContext context) {
+    debugPrint('________Building DefaultNavPageState________');
     return Scaffold(
       appBar: _appBars[_selectedIndex],
       body: gradientBody(child: pages[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.blue,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color.fromARGB(255, 112, 191, 255),
+        elevation: 0,
         currentIndex: _selectedIndex,
         onTap: _onTappingNavBarItem,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: const Color.fromARGB(137, 0, 0, 0),
+        selectedItemColor: const Color.fromARGB(255, 0, 116, 211),
+        unselectedItemColor: const Color.fromARGB(255, 0, 0, 0),
+        showSelectedLabels: true,
+        showUnselectedLabels: false,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.alarm), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home', //
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.alarm),
+            label: 'Alarms', //
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.nightlight_round),
-            label: '',
+            label: 'Sleep',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.medication_outlined),
-            label: '',
+            label: 'Medicine',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book),
+            label: 'Learning',
+          ),
         ],
       ),
     );

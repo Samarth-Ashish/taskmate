@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:taskmate/models/alarm.module.dart';
 import 'package:taskmate/models/learning.module.dart';
 import 'package:taskmate/models/medicine.module.dart';
@@ -8,12 +9,18 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
+  Future<void> refresh() async {
+    setState(() {
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    debugPrint("____________Building HomePage____________");
     return Center(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -187,6 +194,8 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+            // const SizedBox(height: 24),
+            // const QuickActions(),
           ],
         ),
       ),
@@ -194,4 +203,107 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class MedicationModel {}
+//!
+
+class QuickActions extends StatefulWidget {
+  const QuickActions({super.key});
+
+  @override
+  State<QuickActions> createState() => _QuickActionsState();
+}
+
+class _QuickActionsState extends State<QuickActions> {
+  Medicine? nextMedicine;
+  DateTime? nextMedicineTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUpcomingTasks();
+  }
+
+  Future<void> _loadUpcomingTasks() async {
+    final medEntry = await Medicine.getNextUpcomingMedicineWithTime();
+    if (medEntry != null) {
+      setState(() {
+        nextMedicine = medEntry.key;
+        nextMedicineTime = medEntry.value;
+      });
+    }
+  }
+
+  Widget _buildActionItem(String title, String time, String buttonText) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$title at $time',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+          TextButton(
+            onPressed: () {}, // TODO: Add action
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              buttonText,
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String medicineLabel =
+        nextMedicine?.medicineName ?? "No upcoming medicine";
+    final String medicineTime = nextMedicineTime != null
+        ? DateFormat.jm().format(nextMedicineTime!)
+        : "--";
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB3E5FC),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.add_circle, color: Colors.blue),
+              SizedBox(width: 8),
+              Text(
+                'Quick Actions',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildActionItem('Take $medicineLabel', medicineTime, 'Mark Taken'),
+          _buildActionItem('Study Math', '45 mins', 'Start Timer'),
+          _buildActionItem('Prepare for bed', '9:30 PM', 'Start'),
+        ],
+      ),
+    );
+  }
+}

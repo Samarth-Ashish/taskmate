@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:taskmate/views/texts.dart';
 
-
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Widget? pageToPush;
   final IconData? actionIcon;
   final String customTitle;
   final bool? addText;
   final bool? isCenterTitle;
-  final GestureTapCallback? onTap;
+  final VoidCallback? onTap;
+  final dynamic onRefresh;
 
   const CustomAppBar({
     required this.customTitle,
@@ -16,6 +16,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.actionIcon,
     this.addText,
     this.isCenterTitle,
+    this.onRefresh,
     this.onTap,
     super.key,
   });
@@ -61,9 +62,10 @@ class CustomAppBarState extends State<CustomAppBar> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => _pageToPush!), //
-                    ).then((value) {
-                      if (value == true && widget.onTap != null) {
-                        widget.onTap!();
+                    ).then((_) {
+                      debugPrint('Returned from pushed page');
+                      if (widget.onRefresh != null) {
+                        widget.onRefresh!(); // This refreshes the parent page
                       }
                     });
                   }
@@ -76,8 +78,8 @@ class CustomAppBarState extends State<CustomAppBar> {
                   center: Alignment.center,
                   radius: 0.85,
                   colors: [
-                    Color.fromARGB(255, 93, 204, 255),
-                    Color.fromARGB(255, 0, 160, 247),
+                    Color.fromARGB(255, 78, 199, 255),
+                    Color.fromARGB(255, 4, 167, 255),
                   ],
                   stops: [0.0, 1.0],
                 ),

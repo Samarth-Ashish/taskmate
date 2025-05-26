@@ -7,6 +7,7 @@ import 'package:taskmate/notif_callbacks/alarm_callback.dart';
 import 'package:taskmate/models/alarm.module.dart';
 import 'package:taskmate/models/medicine.module.dart';
 import 'package:taskmate/pages/navigation_page.dart';
+import 'package:taskmate/pages/splash_screen.dart';
 import 'package:taskmate/utils/snackbar_utils.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -78,7 +79,6 @@ void main() async {
   await AndroidAlarmManager.initialize();
   await Alarm.syncAlarmsWithSystem();
   await Medicine.syncMedicinesWithSystem();
-  
 
   runApp(MyApp());
   //!
@@ -114,7 +114,12 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: DefaultNavPage(),
+      // home: DefaultNavPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => SplashPage(),
+        '/home': (context) => DefaultNavPage(),
+      },
     );
   }
 }

@@ -7,19 +7,20 @@ class MedicinePage extends StatefulWidget {
   const MedicinePage({super.key});
 
   @override
-  State<MedicinePage> createState() => _MedicinePageState();
+  State<MedicinePage> createState() => MedicinePageState();
 }
 
-class _MedicinePageState extends State<MedicinePage> {
+class MedicinePageState extends State<MedicinePage> {
   late List<Medicine> _medicines = [];
+  // final GlobalKey<MedicinePageState> _medicinePageKey = GlobalKey<MedicinePageState>();
 
   @override
   void initState() {
     super.initState();
-    _loadMedicines();
+    loadMedicines();
   }
 
-  Future<void> _loadMedicines() async {
+  Future<void> loadMedicines() async {
     final medicines = await Medicine.loadMedicines();
     setState(() {
       _medicines = medicines;
@@ -28,6 +29,7 @@ class _MedicinePageState extends State<MedicinePage> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('________Building MedicinePageState________');
     return _medicines.isEmpty
         ? Center(
             child: Column(

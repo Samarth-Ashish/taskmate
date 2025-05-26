@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:taskmate/views/custom_app_bar.dart';
 import 'package:taskmate/views/gradient_body.dart';
 import 'package:taskmate/views/texts.dart';
@@ -20,11 +21,11 @@ class _AddAlarmPageState extends State<AddAlarmPage> {
       appBar: const CustomAppBar(customTitle: 'Add Alarm', isCenterTitle: true),
       body: SafeArea(
         child: TimeSelector(
-          onAddingAlarm: (alarm) {
+          onAddingAlarm: (alarm) async {
             // add alarm
+            await Alarm.addAlarm(alarm);
             setState(() {
-              Navigator.of(context).pop(true);
-              Alarm.addAlarm(alarm);
+              Navigator.pop(context, true);
             });
           },
         ),
@@ -181,7 +182,11 @@ class _TimeSelectorState extends State<TimeSelector> {
                         },
                         decoration: InputDecoration(
                           hintText: 'Alarm Name',
-                          hintStyle: const TextStyle(color: Colors.blueAccent),
+                          hintStyle: GoogleFonts.manjari(
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                            color: const Color.fromARGB(255, 0, 113, 170),
+                          ),
                           filled: true,
                           fillColor: Colors.lightBlue[200],
                           contentPadding: const EdgeInsets.symmetric(
@@ -273,8 +278,6 @@ class _TimeSelectorState extends State<TimeSelector> {
       isEnabled: true,
       alarmWeekdays: weekdays,
     );
-
-    
 
     debugPrint('========================');
     debugPrint("Alarm created: ${alarm.id}");

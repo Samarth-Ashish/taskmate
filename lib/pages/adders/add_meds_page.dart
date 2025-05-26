@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:taskmate/models/medicine.module.dart';
 import 'package:taskmate/views/custom_app_bar.dart';
 import 'package:taskmate/views/gradient_body.dart';
@@ -13,6 +14,7 @@ class AddMedicinesPage extends StatefulWidget {
 class _AddMedicinesPageState extends State<AddMedicinesPage> {
   @override
   Widget build(BuildContext context) {
+    debugPrint('________Building AddMedicinesPageState________');
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: const CustomAppBar(
@@ -25,7 +27,7 @@ class _AddMedicinesPageState extends State<AddMedicinesPage> {
             // add medicine
             await Medicine.addMedicine(medicine);
             setState(() {
-              Navigator.of(context).pop(true);
+              Navigator.pop(context, true);
             });
           },
         ),
@@ -154,8 +156,10 @@ class _TimeSelectorState extends State<TimeSelector> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Medicine Name',
-                              hintStyle: const TextStyle(
-                                color: Colors.blueAccent,
+                              hintStyle: GoogleFonts.manjari(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                                color: const Color.fromARGB(255, 0, 113, 170),
                               ),
                               filled: true,
                               fillColor: Colors.lightBlue[200],
@@ -180,8 +184,10 @@ class _TimeSelectorState extends State<TimeSelector> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Medicine Quantity',
-                              hintStyle: const TextStyle(
-                                color: Colors.blueAccent,
+                              hintStyle: GoogleFonts.manjari(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                                color: const Color.fromARGB(255, 0, 113, 170),
                               ),
                               filled: true,
                               fillColor: Colors.lightBlue[200],

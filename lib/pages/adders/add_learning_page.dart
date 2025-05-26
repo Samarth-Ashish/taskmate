@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:taskmate/models/learning.module.dart';
 import 'package:taskmate/views/custom_app_bar.dart';
 import 'package:taskmate/views/gradient_body.dart';
@@ -154,8 +155,10 @@ class _TimeSelectorState extends State<TimeSelector> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Subject Name',
-                              hintStyle: const TextStyle(
-                                color: Colors.blueAccent,
+                              hintStyle: GoogleFonts.manjari(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                                color: const Color.fromARGB(255, 0, 113, 170),
                               ),
                               filled: true,
                               fillColor: Colors.lightBlue[200],
@@ -180,8 +183,10 @@ class _TimeSelectorState extends State<TimeSelector> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Study Duration',
-                              hintStyle: const TextStyle(
-                                color: Colors.blueAccent,
+                              hintStyle: GoogleFonts.manjari(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                                color: const Color.fromARGB(255, 0, 113, 170),
                               ),
                               filled: true,
                               fillColor: Colors.lightBlue[200],

@@ -6,21 +6,35 @@ final Shader appBarTextGradient = LinearGradient(
     const Color.fromARGB(255, 111, 190, 255),
     const Color.fromARGB(255, 0, 62, 113),
   ],
-).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0));
+  // ).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0));
+).createShader(Rect.fromLTWH(0.0, 0.0, 400.0, 100.0)); // Larger area
 
-Text lobsterAppBarText(String string) {
-  return Text(
-    string,
-    style: GoogleFonts.lobster(
-      fontSize: 40,
-      foreground: Paint()..shader = appBarTextGradient,
-      shadows: [
-        Shadow(
-          color: Colors.grey.shade500,
-          offset: Offset(0, 2),
-          blurRadius: 4,
-        ),
-      ],
+Widget lobsterAppBarText(String text) {
+  return ShaderMask(
+    shaderCallback: (Rect bounds) {
+      return const LinearGradient(
+        colors: [
+          Color.fromARGB(255, 46, 161, 255),
+          Color.fromARGB(255, 0, 62, 113),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(bounds);
+    },
+    blendMode: BlendMode.srcIn,
+    child: Text(
+      text,
+      style: GoogleFonts.lobster(
+        fontSize: 40,
+        color: Colors.white, // Required for ShaderMask to work correctly
+        shadows: [
+          Shadow(
+            color: const Color.fromARGB(255, 0, 45, 68),
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
     ),
   );
 }

@@ -8,19 +8,19 @@ class LearningPage extends StatefulWidget {
   const LearningPage({super.key});
 
   @override
-  State<LearningPage> createState() => _LearningPageState();
+  State<LearningPage> createState() => LearningPageState();
 }
 
-class _LearningPageState extends State<LearningPage> {
+class LearningPageState extends State<LearningPage> {
   late List<Subject> _subjects = [];
 
   @override
   void initState() {
     super.initState();
-    _loadSubjects();
+    loadSubjects();
   }
 
-  Future<void> _loadSubjects() async {
+  Future<void> loadSubjects() async {
     final subjects = await Subject.loadSubjects();
     setState(() {
       _subjects = subjects;
