@@ -23,6 +23,7 @@ class _AddMedicinesPageState extends State<AddMedicinesPage> {
         child: TimeSelector(
           onAddingMedicine: (medicine) async {
             // add medicine
+            await Medicine.addMedicine(medicine);
             setState(() {
               Navigator.of(context).pop(true);
             });

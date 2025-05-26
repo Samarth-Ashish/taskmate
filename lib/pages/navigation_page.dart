@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:taskmate/pages/adders/profile_page.dart';
-import 'package:taskmate/pages/adders/sleep_stats_page.dart';
 import 'package:taskmate/views/custom_app_bar.dart';
 import 'package:taskmate/views/gradient_body.dart';
-import '../pages/home_page.dart';
-import 'alarm_page.dart';
-import '../pages/sleep_page.dart';
-import '../pages/learning_page.dart';
-import 'medicine_page.dart';
+import 'main_pages/home_page.dart';
+import 'main_pages/alarm_page.dart';
+import 'main_pages/sleep_page.dart';
+import 'main_pages/learning_page.dart';
+import 'main_pages/medicine_page.dart';
 import 'adders/add_alarm_page.dart';
 import 'adders/add_meds_page.dart';
 import 'adders/add_learning_page.dart';
@@ -52,31 +50,6 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         pageToPush: AddAlarmPage(),
         actionIcon: Icons.alarm_add,
         customTitle: 'Alarms',
-        // onTap: () async {
-        //   final result = await Navigator.push(
-        //     context,
-        //     MaterialPageRoute(builder: (_) => AddAlarmPage()),
-        //   );
-
-        //   if (result == true && mounted) {
-        //     // Reload alarms if we're in AlarmPage
-        //     final state = context.findAncestorStateOfType<_AlarmPageState>();
-        //     await state?._loadAlarms();
-        //   }
-        // },
-        // onTap: () async {
-        //   final result = await Navigator.push(
-        //     context,
-        //     MaterialPageRoute(builder: (_) => AddAlarmPage()),
-        //   );
-
-        //   // if (result == true && _selectedIndex == 1 && mounted) {
-        //   setState(() {
-        //     _selectedIndex = 0; // or reload alarms if needed
-        //     _selectedIndex = 1; // or reload alarms if needed
-        //   }); // forces AlarmPage to rebuild
-        //   // }
-        // },
       ),
       CustomAppBar(
         // pageToPush: SleepStatsPage(),
@@ -88,6 +61,11 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         pageToPush: AddMedicinesPage(),
         actionIcon: Icons.medication,
         customTitle: 'Medicine',
+        // onTap: () {
+        //   setState(() {
+        //     debugPrint('State updated after returning from AddMedicinesPage');
+        //   });
+        // },
       ),
       CustomAppBar(
         pageToPush: AddLearningPage(),

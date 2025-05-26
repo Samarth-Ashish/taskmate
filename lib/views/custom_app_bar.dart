@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:taskmate/views/texts.dart';
 
-// GestureDetector CustomAppBar({
-//   required Widget pageToPush,
-//   required IconData icon,
-// }) {
-//   return CustomAppBar();
-// }
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Widget? pageToPush;
@@ -42,6 +36,7 @@ class CustomAppBarState extends State<CustomAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Building CustomAppBarState');
     return AppBar(
       title: lobsterAppBarText(_title),
       centerTitle: _isCenterTitle,
@@ -66,13 +61,10 @@ class CustomAppBarState extends State<CustomAppBar> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => _pageToPush!), //
-                    ).then((_) {
-                      // Called after PageB is popped
-                      setState(() {
-                        debugPrint(
-                          '==========Returned from pushed page==========',
-                        );
-                      });
+                    ).then((value) {
+                      if (value == true && widget.onTap != null) {
+                        widget.onTap!();
+                      }
                     });
                   }
                 },

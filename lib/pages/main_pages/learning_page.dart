@@ -66,7 +66,7 @@ class _LearningPageState extends State<LearningPage> {
                   padding: const EdgeInsets.only(right: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                
+
                 onDismissed: (direction) {
                   final removedSubject = subject;
 
@@ -162,7 +162,9 @@ class _LearningPageState extends State<LearningPage> {
                                   subject.isEnabled,
                                 );
                               },
-                              child: Text(subject.isEnabled ? 'Start' : '✔️ Done'),
+                              child: Text(
+                                subject.isEnabled ? 'Mark Done' : '✔️ Done',
+                              ),
                             ),
                           ],
                         ),

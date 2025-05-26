@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:taskmate/utils/snackbar_utils.dart';
 import 'package:taskmate/views/texts.dart';
-import '../models/alarm.module.dart';
+import '../../models/alarm.module.dart';
 
 class AlarmPage extends StatefulWidget {
   const AlarmPage({super.key});
