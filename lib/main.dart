@@ -1,18 +1,18 @@
 import 'dart:io';
-import 'dart:isolate';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:taskmate/callbacks/alarm_callback.dart';
+import 'package:taskmate/notif_callbacks/alarm_callback.dart';
 import 'package:taskmate/models/alarm.module.dart';
-import 'package:taskmate/pages/default_page.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:taskmate/models/medicine.module.dart';
+import 'package:taskmate/pages/navigation_page.dart';
+import 'package:taskmate/utils/snackbar_utils.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> requestNotificationsPermission() async {
-  // Initialize plugin if not already done
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -22,7 +22,6 @@ Future<void> requestNotificationsPermission() async {
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Only required on Android 13+ (API level 33+)
   if (Platform.isAndroid) {
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
         flutterLocalNotificationsPlugin
@@ -41,31 +40,48 @@ Future<void> requestNotificationsPermission() async {
   }
 }
 
+Future<bool> isIgnoringBatteryOptimizations() async {
+  const platform = MethodChannel("battery_optimization");
+  try {
+    final bool result = await platform.invokeMethod(
+      "isIgnoringBatteryOptimizations",
+    );
+    return result;
+  } on PlatformException catch (e) {
+    debugPrint("Error checking battery optimization: $e");
+    return false;
+  }
+}
+
+Future<void> requestBatteryOptimizationExemption() async {
+  const platform = MethodChannel("battery_optimization");
+  final isIgnoring = await platform.invokeMethod<bool>(
+    'isIgnoringBatteryOptimizations',
+  );
+  if (isIgnoring == false) {
+    await platform.invokeMethod('requestIgnoreBatteryOptimizations');
+  }
+}
+
+//!
+//!
+//!
+//!
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Request permissions
   await requestNotificationsPermission();
-
-  // Init local notifications
-  // const AndroidInitializationSettings initializationSettingsAndroid =
-  //     AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  // const InitializationSettings initializationSettings = InitializationSettings(
-  //   android: initializationSettingsAndroid,
-  // );
-
-  // await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-  // tz.initializeTimeZones();
-  // await Alarm.init();
+  await requestBatteryOptimizationExemption();
 
   // Init alarm manager
   await AndroidAlarmManager.initialize();
-  // await AndroidAlarmManager.cancel(0);
-  await AlarmModel.syncAlarmsWithSystem();
+  await Alarm.syncAlarmsWithSystem();
+  await Medicine.syncMedicinesWithSystem();
+  
 
   runApp(MyApp());
-  //
-  // debugPrint('======Alarm initialized!======');
+  //!
   try {
     await AndroidAlarmManager.oneShot(
       Duration(minutes: 1),
@@ -81,14 +97,20 @@ void main() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TaskMate',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: SnackbarUtil.scaffoldMessengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),

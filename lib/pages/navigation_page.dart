@@ -64,19 +64,19 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         //     await state?._loadAlarms();
         //   }
         // },
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddAlarmPage()),
-          );
+        // onTap: () async {
+        //   final result = await Navigator.push(
+        //     context,
+        //     MaterialPageRoute(builder: (_) => AddAlarmPage()),
+        //   );
 
-          // if (result == true && _selectedIndex == 1 && mounted) {
-          setState(() {
-            _selectedIndex = 0; // or reload alarms if needed
-            _selectedIndex = 1; // or reload alarms if needed
-          }); // forces AlarmPage to rebuild
-          // }
-        },
+        //   // if (result == true && _selectedIndex == 1 && mounted) {
+        //   setState(() {
+        //     _selectedIndex = 0; // or reload alarms if needed
+        //     _selectedIndex = 1; // or reload alarms if needed
+        //   }); // forces AlarmPage to rebuild
+        //   // }
+        // },
       ),
       CustomAppBar(
         // pageToPush: SleepStatsPage(),
@@ -85,7 +85,7 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         customTitle: 'Sleep',
       ),
       CustomAppBar(
-        pageToPush: AddMedsPage(),
+        pageToPush: AddMedicinesPage(),
         actionIcon: Icons.medication,
         customTitle: 'Medicine',
       ),

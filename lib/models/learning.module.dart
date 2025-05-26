@@ -2,18 +2,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:taskmate/callbacks/alarm_callback.dart';
+import 'package:taskmate/notif_callbacks/learning_callback.dart';
 
-class LearningModel {
-  int? id;
+class Subject {
+  int id;
   String? subjectName;
   String? studyDuration;
   TimeOfDay? studyTime;
   bool isEnabled;
   List<int> studyWeekdays;
 
-  LearningModel({
-    this.id,
+  Subject({
+    required this.id,
     this.subjectName,
     this.studyDuration,
     this.studyTime,
@@ -21,7 +21,7 @@ class LearningModel {
     this.studyWeekdays = const [],
   });
 
-  factory LearningModel.fromMap(Map<String, dynamic> json) => LearningModel(
+  factory Subject.fromMap(Map<String, dynamic> json) => Subject(
     id: json["id"],
     subjectName: json["subjectName"],
     studyDuration: json["studyDuration"],
@@ -43,7 +43,7 @@ class LearningModel {
     };
   }
 
-  factory LearningModel.fromJson(Map<String, dynamic> json) {
+  factory Subject.fromJson(Map<String, dynamic> json) {
     TimeOfDay? time;
     if (json['studyTime'] != null) {
       final timeParts = (json['studyTime'] as String).split(':');
@@ -53,7 +53,7 @@ class LearningModel {
       );
     }
 
-    return LearningModel(
+    return Subject(
       id: json['id'],
       subjectName: json['subjectName'],
       studyDuration: json['studyDuration'],
@@ -72,35 +72,47 @@ class LearningModel {
     return studyWeekdays.map((d) => days[d % 7 - 1]).join(', ');
   }
 
-  static Future<String?> getLearningTitleById(int id) async {
+  static Future<String?> getSubjectTitleById(int id) async {
+    debugPrint("---------- Getting subject title by ID $id ----------");
     final subjects = await loadSubjects();
-    final subject = subjects.firstWhere(
-      (a) => a.id == id,
-      orElse: () => LearningModel(),
+    debugPrint(
+      "---------- Current Subjects: ${subjects.map((a) => a.id).join(', ')} ----------",
     );
-    return subject.subjectName;
+    try {
+      final subject = subjects.firstWhere((a) => a.id == id);
+      return subject.subjectName;
+    } catch (e) {
+      // debugPrint("No subject found for the given ID");
+      return null;
+    }
   }
 
   static const _key = 'subjects';
 
-  static Future<void> saveSubjects(List<LearningModel> subjects) async {
+  static Future<void> saveSubjects(List<Subject> subjects) async {
     final prefs = await SharedPreferences.getInstance();
     final encoded = subjects
         .map((subject) => json.encode(subject.toJson()))
         .toList();
     await prefs.setStringList(_key, encoded);
+    debugPrint(
+      'Subject saved: ${encoded.map((e) => json.decode(e)['id']).join(', ')}',
+    );
   }
 
-  static Future<List<LearningModel>> loadSubjects() async {
+  static Future<List<Subject>> loadSubjects() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? encoded = prefs.getStringList(_key);
+    debugPrint(
+      'All Subjects List: ${encoded?.map((e) => json.decode(e)['id']).join(', ')}',
+    );
     if (encoded == null) return [];
-    return encoded.map((e) => LearningModel.fromJson(json.decode(e))).toList();
+    return encoded.map((e) => Subject.fromJson(json.decode(e))).toList();
   }
 
-  static Future<void> addSubject(LearningModel subject) async {
+  static Future<void> addSubject(Subject subject) async {
     final subjects = await loadSubjects();
-    subject.id = subject.id ?? DateTime.now().millisecondsSinceEpoch;
+    subject.id = subject.id;
     subjects.add(subject);
     await saveSubjects(subjects);
 
@@ -111,21 +123,18 @@ class LearningModel {
 
   static Future<void> removeSubject(int id) async {
     final subjects = await loadSubjects();
-    final subject = subjects.firstWhere(
-      (a) => a.id == id,
-      orElse: () => LearningModel(),
-    );
+    final subject = subjects.firstWhere((a) => a.id == id);
     await subject.cancel();
     subjects.removeWhere((a) => a.id == id);
     await saveSubjects(subjects);
   }
 
-  static Future<LearningModel?> getLearningById(int id) async {
+  static Future<Subject?> getSubjectById(int id) async {
     final subjects = await loadSubjects();
     return subjects.firstWhere((a) => a.id == id);
   }
 
-  static Future<void> setLearningEnabled(int id, bool enabled) async {
+  static Future<void> setSubjectEnabled(int id, bool enabled) async {
     final subjects = await loadSubjects();
     for (var a in subjects) {
       if (a.id == id) {
@@ -136,87 +145,84 @@ class LearningModel {
     await saveSubjects(subjects);
   }
 
-  /// Schedule repeating learning for selected weekdays
+  // Schedule repeating SubjectSession for selected weekdays
   Future<void> schedule() async {
-    if (studyTime == null || !isEnabled || studyWeekdays.isEmpty) return;
+    debugPrint("---------- Scheduling subject '$id' ----------");
+    if (studyTime == null || !isEnabled) return;
 
-    for (int weekday in studyWeekdays) {
-      final now = DateTime.now();
-      DateTime next = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        studyTime!.hour,
-        studyTime!.minute,
-      );
+    final now = DateTime.now();
+    DateTime next = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      studyTime!.hour,
+      studyTime!.minute,
+    );
 
-      while (next.weekday != weekday || next.isBefore(now)) {
-        next = next.add(Duration(days: 1));
-      }
-
-      final duration = next.difference(now);
-      int subjectId =
-          (id ?? hashCode) % 1000000000 + weekday; // Unique ID per weekday
-
-      await AndroidAlarmManager.periodic(
-        const Duration(days: 7),
-        subjectId % 100000000,
-        alarmCallback,
-        startAt: DateTime.now().add(duration),
-        exact: true,
-        wakeup: true,
-      );
-
-      debugPrint(
-        "Scheduled subject for '$subjectName' (${studyDuration ?? ''}) every ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1]} at ${getstudyTime()}",
-      );
+    while (next.isBefore(now)) {
+      next = next.add(Duration(days: 1));
     }
+
+    final duration = next.difference(now);
+    int subjectSessionID = id; // Unique ID per weekday
+
+    await AndroidAlarmManager.periodic(
+      const Duration(days: 1),
+      subjectSessionID,
+      studySessionCallback,
+      startAt: DateTime.now().add(duration),
+      exact: true,
+      wakeup: true,
+    );
+
+    debugPrint(
+      "Scheduled repeating Subject Session '$id' everyday at ${getstudyTime()}",
+    );
   }
 
+  // Cancel
   Future<void> cancel() async {
-    for (int weekday in studyWeekdays) {
-      int subjectId = (id ?? hashCode) % 1000000000 + weekday;
-      await AndroidAlarmManager.cancel(subjectId);
-    }
+    int subjectSessionID = id;
+    await AndroidAlarmManager.cancel(subjectSessionID);
   }
 
   static Future<void> syncLearningWithSystem() async {
     final subjects = await loadSubjects();
 
-    for (var learning in subjects) {
-      await learning.cancel();
+    for (var subjectSession in subjects) {
+      await subjectSession.cancel();
     }
 
-    for (var learning in subjects) {
-      if (learning.isEnabled) {
-        await learning.schedule();
+    for (var subjectSession in subjects) {
+      if (subjectSession.isEnabled) {
+        await subjectSession.schedule();
       }
     }
 
     debugPrint('Learning synchronized with system');
   }
 
-  static Future<MapEntry<LearningModel, DateTime>?>
-  getNextUpcomingAlarmWithTime() async {
-    final alarms = await loadSubjects();
+  static Future<MapEntry<Subject, DateTime>?>
+  getNextUpcomingSubjectWithTime() async {
+    final subjectSessions = await loadSubjects();
     final now = DateTime.now();
     DateTime? nearestTime;
-    LearningModel? nextAlarm;
+    Subject? nextSubjectSession;
 
-    for (final learning in alarms) {
-      if (!learning.isEnabled ||
-          learning.studyTime == null ||
-          learning.studyWeekdays.isEmpty) {
+    for (final subjectSession in subjectSessions) {
+      if (!subjectSession.isEnabled ||
+          subjectSession.studyTime == null ||
+          subjectSession.studyWeekdays.isEmpty) {
         continue;
       }
 
-      for (final weekday in learning.studyWeekdays) {
+      for (final weekday in subjectSession.studyWeekdays) {
         DateTime candidate = DateTime(
           now.year,
           now.month,
           now.day,
-          learning.studyTime!.hour,
-          learning.studyTime!.minute,
+          subjectSession.studyTime!.hour,
+          subjectSession.studyTime!.minute,
         );
 
         int currentWeekday = candidate.weekday;
@@ -230,13 +236,13 @@ class LearningModel {
 
         if (nearestTime == null || candidate.isBefore(nearestTime)) {
           nearestTime = candidate;
-          nextAlarm = learning;
+          nextSubjectSession = subjectSession;
         }
       }
     }
 
-    return (nextAlarm != null && nearestTime != null)
-        ? MapEntry(nextAlarm, nearestTime)
+    return (nextSubjectSession != null && nearestTime != null)
+        ? MapEntry(nextSubjectSession, nearestTime)
         : null;
   }
 
@@ -248,10 +254,6 @@ class LearningModel {
     for (final session in sessions) {
       if (!session.isEnabled || session.studyTime == null) continue;
 
-      // Check if today is a selected study weekday
-      // if (!session.studyWeekdays.contains(now.weekday)) continue;
-
-      // Construct the scheduled DateTime for today
       final scheduledTime = DateTime(
         now.year,
         now.month,

@@ -1,64 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:taskmate/callbacks/alarm_controller.dart';
 import 'package:taskmate/models/medicine.module.dart';
 import 'package:taskmate/views/custom_app_bar.dart';
 import 'package:taskmate/views/gradient_body.dart';
-import 'package:taskmate/views/texts.dart';
 
-class AddMedsPage extends StatefulWidget {
-  const AddMedsPage({super.key});
+class AddMedicinesPage extends StatefulWidget {
+  const AddMedicinesPage({super.key});
 
   @override
-  State<AddMedsPage> createState() => _AddMedsPageState();
+  State<AddMedicinesPage> createState() => _AddMedicinesPageState();
 }
 
-class _AddMedsPageState extends State<AddMedsPage> {
+class _AddMedicinesPageState extends State<AddMedicinesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: const CustomAppBar(
         customTitle: 'Add Medicine',
         isCenterTitle: true,
       ),
-      body: AlarmTimeSelector(
-        onAlarmCreated: (medicine) async {
-          // add medicine
-          setState(() {
-            Navigator.of(
-              context,
-            ).pop(true); // Return success to previous screen
-            MedicineModel.addMedicine(medicine);
-          });
-        },
+      body: SafeArea(
+        child: TimeSelector(
+          onAddingMedicine: (medicine) async {
+            // add medicine
+            setState(() {
+              Navigator.of(context).pop(true);
+            });
+          },
+        ),
       ),
     );
   }
 }
 
-class AlarmTimeSelector extends StatefulWidget {
-  final void Function(MedicineModel) onAlarmCreated;
+class TimeSelector extends StatefulWidget {
+  final void Function(Medicine) onAddingMedicine;
 
-  const AlarmTimeSelector({super.key, required this.onAlarmCreated});
+  const TimeSelector({super.key, required this.onAddingMedicine});
 
   @override
-  State<AlarmTimeSelector> createState() => _AlarmTimeSelectorState();
+  State<TimeSelector> createState() => _TimeSelectorState();
 }
 
-class _AlarmTimeSelectorState extends State<AlarmTimeSelector> {
-  int hour = 6;
-  int minute = 10;
-  bool isAm = false;
-  List<bool> selectedDays = List.generate(7, (_) => false);
+class _TimeSelectorState extends State<TimeSelector> {
+  int hour = DateTime.now().hour;
+  int minute = DateTime.now().minute;
+  late bool isAm;
   final TextEditingController _medicineNameController = TextEditingController();
   final TextEditingController _medicineQuantityController =
       TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  final List<String> days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
-  void incrementHour() => setState(() => hour = (hour % 12) + 1);
-  void decrementHour() => setState(() => hour = (hour - 2 + 12) % 12 + 1);
-  void incrementMinute() => setState(() => minute = (minute + 1) % 60);
-  void decrementMinute() => setState(() => minute = (minute - 1 + 60) % 60);
+  @override
+  void initState() {
+    super.initState();
+    isAm = hour < 12;
+    hour = hour % 12;
+  }
 
   @override
   void dispose() {
@@ -70,134 +68,166 @@ class _AlarmTimeSelectorState extends State<AlarmTimeSelector> {
   @override
   Widget build(BuildContext context) {
     return gradientBody(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 15),
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            decoration: BoxDecoration(
-              color: Colors.lightBlue[100],
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Column(
-              children: [
-                // Time Selection
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _timeColumn(
-                      hour.toString().padLeft(2, '0'),
-                      incrementHour,
-                      decrementHour,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(":", style: TextStyle(fontSize: 40)),
-                    ),
-                    _timeColumn(
-                      minute.toString().padLeft(2, '0'),
-                      incrementMinute,
-                      decrementMinute,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // AM/PM Toggle
-                ToggleButtons(
-                  isSelected: [isAm, !isAm],
-                  onPressed: (int index) => setState(() => isAm = index == 0),
-                  borderRadius: BorderRadius.circular(10),
-                  selectedColor: Colors.white,
-                  fillColor: Colors.blue[800],
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text("AM"),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text("PM"),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                const SizedBox(height: 20),
-
-                // Alarm Name Input
-                SizedBox(
-                  width: 200,
-                  child: TextField(
-                    controller: _medicineNameController,
-                    decoration: InputDecoration(
-                      hintText: 'Medicine Name',
-                      hintStyle: const TextStyle(color: Colors.blueAccent),
-                      filled: true,
-                      fillColor: Colors.lightBlue[200],
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 15),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                color: Colors.lightBlue[100],
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Time Selection Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TimePickerColumn(
+                        value: (hour - 1) % 12,
+                        max: 12,
+                        isHour: true,
+                        onChanged: (val) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            setState(() => hour = (val % 12) + 1);
+                          });
+                        },
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(":", style: TextStyle(fontSize: 32)),
+                      ),
+                      TimePickerColumn(
+                        value: minute,
+                        max: 60,
+                        onChanged: (val) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            setState(() => minute = val);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // AM/PM Toggle
+                  ToggleButtons(
+                    isSelected: [isAm, !isAm],
+                    onPressed: (int index) => setState(() => isAm = index == 0),
+                    borderRadius: BorderRadius.circular(10),
+                    selectedColor: Colors.white,
+                    fillColor: Colors.blue[800],
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Text("AM"),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Text("PM"),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Alarm Name Input
+                  SizedBox(
+                    width: 200,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _medicineNameController,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Medicine name is required';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Medicine Name',
+                              hintStyle: const TextStyle(
+                                color: Colors.blueAccent,
+                              ),
+                              filled: true,
+                              fillColor: Colors.lightBlue[200],
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _medicineQuantityController,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Medicine quantity is required';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Medicine Quantity',
+                              hintStyle: const TextStyle(
+                                color: Colors.blueAccent,
+                              ),
+                              filled: true,
+                              fillColor: Colors.lightBlue[200],
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                SizedBox(
-                  width: 200,
-                  child: TextField(
-                    controller: _medicineQuantityController,
-                    decoration: InputDecoration(
-                      hintText: 'Medicine Quantity',
-                      hintStyle: const TextStyle(color: Colors.blueAccent),
-                      filled: true,
-                      fillColor: Colors.lightBlue[200],
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Done Button
-          ElevatedButton(
-            onPressed: _createAndSendAlarm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[800],
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                ],
               ),
             ),
-            child: const Text(
-              'Done',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+
+            const SizedBox(height: 20),
+
+            // Done Button
+            ElevatedButton(
+              onPressed: _addAndScheduleMedicine,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[800],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                'Add Medicine',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -228,73 +258,137 @@ class _AlarmTimeSelectorState extends State<AlarmTimeSelector> {
     );
   }
 
-  // void _createAndSendAlarm() {
-  //   final int hour24 = isAm
-  //       ? (hour == 12 ? 0 : hour)
-  //       : (hour == 12 ? 12 : hour + 12);
-
-  //   final List<int> weekdays = [];
-  //   for (int i = 0; i < selectedDays.length; i++) {
-  //     if (selectedDays[i]) weekdays.add(i + 1); // 1 = Monday
-  //   }
-
-  //   final medicine = MedicineModel(
-  //     id: DateTime.now().millisecondsSinceEpoch,
-  //     title: _medicineNameController.text.trim().isNotEmpty
-  //         ? _medicineNameController.text.trim()
-  //         : 'Alarm',
-  //     alarmTime: TimeOfDay(hour: hour24, minute: minute),
-  //     isEnabled: true,
-  //     alarmWeekdays: weekdays,
-  //   );
-
-  //   widget.onAlarmCreated(medicine);
-  // }
-  void _createAndSendAlarm() {
-    if (selectedDays == [false, false, false, false, false, false, false]) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select at least one day")),
-      );
+  void _addAndScheduleMedicine() {
+    if (_formKey.currentState!.validate()) {
+      // do nothing
+    } else {
       return;
     }
 
-    final int hour24 = isAm
-        ? (hour == 12 ? 0 : hour)
-        : (hour == 12 ? 12 : hour + 12);
-
-    final List<int> weekdays = [];
-    // for (int i = 0; i < selectedDays.length; i++) {
-    //   // if (selectedDays[i]) {
-    //   //   weekdays.add(i == 6 ? 7 : i + 1); // 1 = Monday, 7 = Sunday
-    //   // }
-    //   if (selectedDays[i]) weekdays.add(i == 6 ? 7 : i + 1);
-    // }
-    for (int i = 0; i < selectedDays.length; i++) {
-      if (selectedDays[i]) weekdays.add(i + 1); // Mo=1, ..., Su=7
-    }
-
-    final medicine = MedicineModel(
-      id: DateTime.now().millisecondsSinceEpoch,
+    final medicine = Medicine(
+      id: DateTime.now().millisecondsSinceEpoch % 20000000,
       medicineName: _medicineNameController.text.trim().isNotEmpty
           ? _medicineNameController.text.trim()
           : 'Medicine',
       medicineQuantity: _medicineQuantityController.text.trim().isNotEmpty
           ? _medicineQuantityController.text.trim()
           : 'Quantity',
-      medicineTime: TimeOfDay(hour: hour24, minute: minute),
+      medicineTime: TimeOfDay(
+        hour: isAm ? (hour == 12 ? 0 : hour) : (hour == 12 ? 12 : hour + 12),
+        minute: minute,
+      ),
       isEnabled: true,
-      medicineWeekdays: weekdays,
     );
 
-    // Save to persistent storage
-    MedicineModel.addMedicine(medicine);
+    // Medicine.addMedicine(medicine);
+    widget.onAddingMedicine(medicine);
+  }
+}
 
-    // Schedule the medicine (assuming AlarmController has this method)
-    // await AlarmController.scheduleAlarm(medicine);
+class TimePickerColumn extends StatefulWidget {
+  final int value;
+  final int max;
+  final bool isHour;
+  final ValueChanged<int> onChanged;
 
-    widget.onAlarmCreated(medicine);
-    // if (context.mounted) {
-    //   Navigator.of(context).pop(true); // Return success to previous screen
-    // }
+  const TimePickerColumn({
+    required this.value,
+    required this.max,
+    required this.onChanged,
+    this.isHour = false,
+    super.key,
+  });
+
+  @override
+  State<TimePickerColumn> createState() => _TimePickerColumnState();
+}
+
+class _TimePickerColumnState extends State<TimePickerColumn> {
+  late FixedExtentScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FixedExtentScrollController(initialItem: widget.value);
+  }
+
+  void _scrollTo(int index) {
+    _controller.animateToItem(
+      index,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
+    widget.onChanged(index);
+  }
+
+  @override
+  void didUpdateWidget(covariant TimePickerColumn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != _controller.selectedItem) {
+      _controller.jumpToItem(widget.value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.keyboard_arrow_up, size: 18),
+          onPressed: () {
+            final next = (widget.value - 1 + widget.max) % widget.max;
+            _scrollTo(next);
+          },
+        ),
+        SizedBox(
+          height: 120,
+          width: 60,
+          child: ListWheelScrollView.useDelegate(
+            itemExtent: 40,
+            diameterRatio: 1.2,
+            perspective: 0.005,
+            // offAxisFraction: 0.8,
+            physics: const FixedExtentScrollPhysics(),
+            controller: _controller,
+            onSelectedItemChanged: widget.onChanged,
+            childDelegate: ListWheelChildBuilderDelegate(
+              childCount: widget.max,
+              builder: (context, index) {
+                final isSelected = index == widget.value;
+                final display = widget.isHour
+                    ? ((index % 12) + 1).toString().padLeft(2, '0')
+                    : index.toString().padLeft(2, '0');
+                return Center(
+                  child: Text(
+                    display,
+                    style: TextStyle(
+                      fontSize: isSelected ? 36 : 18,
+                      color: isSelected ? Colors.black : Colors.black54,
+                      fontWeight: FontWeight.bold,
+                      shadows: isSelected
+                          ? [
+                              const Shadow(
+                                blurRadius: 2,
+                                color: Colors.black26,
+                                offset: Offset(2, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+          onPressed: () {
+            final next = (widget.value + 1) % widget.max;
+            _scrollTo(next);
+          },
+        ),
+      ],
+    );
   }
 }

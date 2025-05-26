@@ -57,14 +57,14 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: FutureBuilder<MapEntry<AlarmModel, DateTime>?>(
-                  future: AlarmModel.getNextUpcomingAlarmWithTime(),
+                child: FutureBuilder<MapEntry<Alarm, DateTime>?>(
+                  future: Alarm.getNextUpcomingAlarmWithTime(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const CircularProgressIndicator();
                     } else if (!snapshot.hasData || snapshot.data == null) {
                       return Row(
-                        children: [const Text("No upcoming alarms"), Spacer()],
+                        children: [manjariSmall("No upcoming alarms")],
                       );
                     }
 
@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
                               // fontWeight: FontWeight.w700,
                             ),
                             manjari(
-                              "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} "
+                              "${(time.hour % 12).toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} ${time.hour < 12 ? 'AM' : 'PM'} "
                               "(${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][time.weekday - 1]})",
                               fontSize: 18,
                             ),
@@ -141,7 +141,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         manjari("Medications: ", fontSize: 25),
                         FutureBuilder<int>(
-                          future: MedicineModel.getRemainingMedicinesCount(),
+                          future: Medicine.getRemainingMedicinesCount(),
                           builder: (context, snapshot) {
                             if (!snapshot.hasData)
                               return CircularProgressIndicator();
@@ -170,8 +170,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         manjari("Learning: ", fontSize: 25),
                         FutureBuilder<int>(
-                          future:
-                              LearningModel.getRemainingStudySessionsCount(),
+                          future: Subject.getRemainingStudySessionsCount(),
                           builder: (context, snapshot) {
                             if (!snapshot.hasData)
                               return CircularProgressIndicator();

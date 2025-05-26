@@ -2,24 +2,25 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:taskmate/callbacks/alarm_callback.dart';
+import 'package:taskmate/notif_callbacks/alarm_callback.dart';
 
-class AlarmModel {
-  int? id;
+class Alarm {
+  int id;
   String? title;
   TimeOfDay? alarmTime;
+
   bool isEnabled;
   List<int> alarmWeekdays;
 
-  AlarmModel({
-    this.id,
+  Alarm({
+    required this.id,
     this.title,
     this.alarmTime,
     this.isEnabled = true,
     this.alarmWeekdays = const [],
   });
 
-  factory AlarmModel.fromMap(Map<String, dynamic> json) => AlarmModel(
+  factory Alarm.fromMap(Map<String, dynamic> json) => Alarm(
     id: json["id"],
     title: json["title"],
     alarmTime: TimeOfDay.fromDateTime(DateTime.parse(json["alarmTime"])),
@@ -39,7 +40,7 @@ class AlarmModel {
     };
   }
 
-  factory AlarmModel.fromJson(Map<String, dynamic> json) {
+  factory Alarm.fromJson(Map<String, dynamic> json) {
     TimeOfDay? time;
     if (json['alarmTime'] != null) {
       final timeParts = (json['alarmTime'] as String).split(':');
@@ -49,7 +50,7 @@ class AlarmModel {
       );
     }
 
-    return AlarmModel(
+    return Alarm(
       id: json['id'],
       title: json['title'],
       alarmTime: time,
@@ -68,32 +69,44 @@ class AlarmModel {
   }
 
   static Future<String?> getAlarmTitleById(int id) async {
+    debugPrint("---------- Getting alarm title by ID $id ----------");
     final alarms = await loadAlarms();
-    final alarm = alarms.firstWhere(
-      (a) => a.id == id,
-      orElse: () => AlarmModel(),
+    debugPrint(
+      "---------- Current Alarms: ${alarms.map((a) => a.id).join(', ')} ----------",
     );
-    return alarm.title;
+    try {
+      final alarm = alarms.firstWhere((a) => a.id == id);
+      return alarm.title;
+    } catch (e) {
+      // debugPrint("No alarm found for the given ID");
+      return null;
+    }
   }
 
   static const _key = 'alarms';
 
-  static Future<void> saveAlarms(List<AlarmModel> alarms) async {
+  static Future<void> saveAlarms(List<Alarm> alarms) async {
     final prefs = await SharedPreferences.getInstance();
     final encoded = alarms.map((alarm) => json.encode(alarm.toJson())).toList();
     await prefs.setStringList(_key, encoded);
+    debugPrint(
+      'Alarm saved: ${encoded.map((e) => json.decode(e)['id']).join(', ')}',
+    );
   }
 
-  static Future<List<AlarmModel>> loadAlarms() async {
+  static Future<List<Alarm>> loadAlarms() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? encoded = prefs.getStringList(_key);
+    debugPrint(
+      'All alarm IDs: ${encoded?.map((e) => json.decode(e)['id']).join(', ') ?? 'none'}',
+    );
     if (encoded == null) return [];
-    return encoded.map((e) => AlarmModel.fromJson(json.decode(e))).toList();
+    return encoded.map((e) => Alarm.fromJson(json.decode(e))).toList();
   }
 
-  static Future<void> addAlarm(AlarmModel alarm) async {
+  static Future<void> addAlarm(Alarm alarm) async {
     final alarms = await loadAlarms();
-    alarm.id = alarm.id ?? DateTime.now().millisecondsSinceEpoch;
+    alarm.id = alarm.id;
     alarms.add(alarm);
     await saveAlarms(alarms);
 
@@ -102,24 +115,15 @@ class AlarmModel {
     }
   }
 
-  // static Future<void> removeAlarm(int id) async {
-  //   final alarms = await loadAlarms();
-  //   alarms.removeWhere((alarm) => alarm.id == id);
-  //   await saveAlarms(alarms);
-  //   await AndroidAlarmManager.cancel(id);
-  // }
   static Future<void> removeAlarm(int id) async {
     final alarms = await loadAlarms();
-    final alarm = alarms.firstWhere(
-      (a) => a.id == id,
-      orElse: () => AlarmModel(),
-    );
+    final alarm = alarms.firstWhere((a) => a.id == id);
     await alarm.cancel();
     alarms.removeWhere((a) => a.id == id);
     await saveAlarms(alarms);
   }
 
-  static Future<AlarmModel?> getAlarmById(int id) async {
+  static Future<Alarm?> getAlarmById(int id) async {
     final alarms = await loadAlarms();
     return alarms.firstWhere((a) => a.id == id);
   }
@@ -135,8 +139,9 @@ class AlarmModel {
     await saveAlarms(alarms);
   }
 
-  /// Schedule repeating alarm for selected weekdays
+  // Schedule repeating alarm for selected weekdays
   Future<void> schedule() async {
+    debugPrint("---------- Scheduling alarm $id ----------");
     if (alarmTime == null || !isEnabled || alarmWeekdays.isEmpty) return;
 
     for (int weekday in alarmWeekdays) {
@@ -154,12 +159,17 @@ class AlarmModel {
       }
 
       final duration = next.difference(now);
-      int alarmId =
-          (id ?? hashCode) % 1000000000 + weekday; // Unique ID per weekday
+      int alarmId = id + weekday; // Unique ID per weekday
 
+      debugPrint(
+        "~~~~~~~~~~~~  Alarm will ring in ${duration.inHours} hours and ${duration.inMinutes} minutes and ${duration.inSeconds%60} seconds",
+      );
+      debugPrint(
+        "~~~~~~~~~~~~  Alarm starts at ${DateTime.now().add(duration)}",
+      );
       await AndroidAlarmManager.periodic(
         const Duration(days: 7),
-        alarmId % 100000000,
+        alarmId,
         alarmCallback,
         startAt: DateTime.now().add(duration),
         exact: true,
@@ -167,14 +177,15 @@ class AlarmModel {
       );
 
       debugPrint(
-        "Scheduled repeating alarm '$title' every ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1]} at ${getAlarmTime()}",
+        "---------- Scheduled repeating alarm $id '$title' every ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1]} at ${getAlarmTime()}",
       );
     }
   }
 
+  // Cancel
   Future<void> cancel() async {
     for (int weekday in alarmWeekdays) {
-      int alarmId = (id ?? hashCode) % 1000000000 + weekday;
+      int alarmId = id + weekday;
       await AndroidAlarmManager.cancel(alarmId);
     }
   }
@@ -197,12 +208,12 @@ class AlarmModel {
     debugPrint('Alarms synchronized with system');
   }
 
-  static Future<MapEntry<AlarmModel, DateTime>?>
+  static Future<MapEntry<Alarm, DateTime>?>
   getNextUpcomingAlarmWithTime() async {
     final alarms = await loadAlarms();
     final now = DateTime.now();
     DateTime? nearestTime;
-    AlarmModel? nextAlarm;
+    Alarm? nextAlarm;
 
     for (final alarm in alarms) {
       if (!alarm.isEnabled ||

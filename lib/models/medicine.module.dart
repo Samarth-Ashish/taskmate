@@ -2,18 +2,19 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:taskmate/callbacks/medicine_callback.dart';
+import 'package:taskmate/notif_callbacks/medicine_callback.dart';
 
-class MedicineModel {
-  int? id;
+class Medicine {
+  int id;
   String? medicineName;
   String? medicineQuantity;
   TimeOfDay? medicineTime;
+
   bool isEnabled;
   List<int> medicineWeekdays;
 
-  MedicineModel({
-    this.id,
+  Medicine({
+    required this.id,
     this.medicineName,
     this.medicineQuantity,
     this.medicineTime,
@@ -21,7 +22,7 @@ class MedicineModel {
     this.medicineWeekdays = const [],
   });
 
-  factory MedicineModel.fromMap(Map<String, dynamic> json) => MedicineModel(
+  factory Medicine.fromMap(Map<String, dynamic> json) => Medicine(
     id: json["id"],
     medicineName: json["medicineName"],
     medicineQuantity: json["medicineQuantity"],
@@ -43,7 +44,7 @@ class MedicineModel {
     };
   }
 
-  factory MedicineModel.fromJson(Map<String, dynamic> json) {
+  factory Medicine.fromJson(Map<String, dynamic> json) {
     TimeOfDay? time;
     if (json['medicineTime'] != null) {
       final timeParts = (json['medicineTime'] as String).split(':');
@@ -53,7 +54,7 @@ class MedicineModel {
       );
     }
 
-    return MedicineModel(
+    return Medicine(
       id: json['id'],
       medicineName: json['medicineName'],
       medicineQuantity: json['medicineQuantity'],
@@ -73,34 +74,46 @@ class MedicineModel {
   }
 
   static Future<String?> getMedicineTitleById(int id) async {
+    debugPrint("---------- Getting medicine title by ID $id ----------");
     final medicines = await loadMedicines();
-    final medicine = medicines.firstWhere(
-      (a) => a.id == id,
-      orElse: () => MedicineModel(),
+    debugPrint(
+      "---------- Current Medicines: ${medicines.map((a) => a.id).join(', ')} ----------",
     );
-    return medicine.medicineName;
+    try {
+      final medicine = medicines.firstWhere((a) => a.id == id);
+      return medicine.medicineName;
+    } catch (e) {
+      // debugPrint("No medicine found for the given ID");
+      return null;
+    }
   }
 
   static const _key = 'medicines';
 
-  static Future<void> saveMedicines(List<MedicineModel> medicines) async {
+  static Future<void> saveMedicines(List<Medicine> medicines) async {
     final prefs = await SharedPreferences.getInstance();
     final encoded = medicines
         .map((medicine) => json.encode(medicine.toJson()))
         .toList();
     await prefs.setStringList(_key, encoded);
+    debugPrint(
+      'Medicine saved: ${encoded.map((e) => json.decode(e)['id']).join(', ')}',
+    );
   }
 
-  static Future<List<MedicineModel>> loadMedicines() async {
+  static Future<List<Medicine>> loadMedicines() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? encoded = prefs.getStringList(_key);
+    debugPrint(
+      'All Medicines List: ${encoded?.map((e) => json.decode(e)['id']).join(', ')}',
+    );
     if (encoded == null) return [];
-    return encoded.map((e) => MedicineModel.fromJson(json.decode(e))).toList();
+    return encoded.map((e) => Medicine.fromJson(json.decode(e))).toList();
   }
 
-  static Future<void> addMedicine(MedicineModel medicine) async {
+  static Future<void> addMedicine(Medicine medicine) async {
     final medicines = await loadMedicines();
-    medicine.id = medicine.id ?? DateTime.now().millisecondsSinceEpoch;
+    medicine.id = medicine.id;
     medicines.add(medicine);
     await saveMedicines(medicines);
 
@@ -111,16 +124,13 @@ class MedicineModel {
 
   static Future<void> removeMedicine(int id) async {
     final medicines = await loadMedicines();
-    final medicine = medicines.firstWhere(
-      (a) => a.id == id,
-      orElse: () => MedicineModel(),
-    );
+    final medicine = medicines.firstWhere((a) => a.id == id);
     await medicine.cancel();
     medicines.removeWhere((a) => a.id == id);
     await saveMedicines(medicines);
   }
 
-  static Future<MedicineModel?> getMedicineById(int id) async {
+  static Future<Medicine?> getMedicineById(int id) async {
     final medicines = await loadMedicines();
     return medicines.firstWhere((a) => a.id == id);
   }
@@ -136,48 +146,52 @@ class MedicineModel {
     await saveMedicines(medicines);
   }
 
-  /// Schedule repeating medicine for selected weekdays
+  // Schedule repeating medicine for selected weekdays
   Future<void> schedule() async {
-    if (medicineTime == null || !isEnabled || medicineWeekdays.isEmpty) return;
+    debugPrint("---------- Scheduling medicine '$id' ----------");
+    if (medicineTime == null || !isEnabled) return;
 
-    for (int weekday in medicineWeekdays) {
-      final now = DateTime.now();
-      DateTime next = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        medicineTime!.hour,
-        medicineTime!.minute,
-      );
+    final now = DateTime.now();
+    DateTime next = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      medicineTime!.hour,
+      medicineTime!.minute,
+    );
 
-      while (next.weekday != weekday || next.isBefore(now)) {
-        next = next.add(Duration(days: 1));
-      }
-
-      final duration = next.difference(now);
-      int medicineId =
-          (id ?? hashCode) % 1000000000 + weekday; // Unique ID per weekday
-
-      await AndroidAlarmManager.periodic(
-        const Duration(days: 7),
-        medicineId % 100000000,
-        alarmCallback,
-        startAt: DateTime.now().add(duration),
-        exact: true,
-        wakeup: true,
-      );
-
-      debugPrint(
-        "Scheduled medicine for '$medicineName' (${medicineQuantity ?? ''}) every ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1]} at ${getMedicineTime()}",
-      );
+    while (next.isBefore(now)) {
+      next = next.add(Duration(days: 1));
     }
+
+    final duration = next.difference(now);
+    int medicineId = id;
+
+    debugPrint(
+      "~~~~~~~~~~~~  Medicine will ring in ${duration.inHours} hours and ${duration.inMinutes} minutes and ${duration.inSeconds % 60} seconds",
+    );
+    debugPrint(
+      "~~~~~~~~~~~~  Medicine starts at ${DateTime.now().add(duration)}",
+    );
+
+    await AndroidAlarmManager.periodic(
+      const Duration(days: 1),
+      medicineId,
+      medicineCallback,
+      startAt: DateTime.now().add(duration),
+      exact: true,
+      wakeup: true,
+    );
+
+    debugPrint(
+      "Scheduled repeating medicine '$id' everyday at ${getNextUpcomingMedicineWithTime()}",
+    );
   }
 
+  // Cancel
   Future<void> cancel() async {
-    for (int weekday in medicineWeekdays) {
-      int medicineId = (id ?? hashCode) % 1000000000 + weekday;
-      await AndroidAlarmManager.cancel(medicineId);
-    }
+    int medicineId = id;
+    await AndroidAlarmManager.cancel(medicineId);
   }
 
   static Future<void> syncMedicinesWithSystem() async {
@@ -196,47 +210,41 @@ class MedicineModel {
     debugPrint('Medicines synchronized with system');
   }
 
-  static Future<MapEntry<MedicineModel, DateTime>?>
-  getNextUpcomingAlarmWithTime() async {
-    final alarms = await loadMedicines();
+  static Future<MapEntry<Medicine, DateTime>?>
+  getNextUpcomingMedicineWithTime() async {
+    final medicines = await loadMedicines();
     final now = DateTime.now();
     DateTime? nearestTime;
-    MedicineModel? nextAlarm;
+    Medicine? nextMedicine;
 
-    for (final medicine in alarms) {
-      if (!medicine.isEnabled ||
-          medicine.medicineTime == null ||
-          medicine.medicineWeekdays.isEmpty) {
+    for (var medicine in medicines) {
+      if (!medicine.isEnabled || medicine.medicineTime == null) {
         continue;
       }
 
-      for (final weekday in medicine.medicineWeekdays) {
-        DateTime candidate = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          medicine.medicineTime!.hour,
-          medicine.medicineTime!.minute,
-        );
+      DateTime candidate = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        medicine.medicineTime!.hour,
+        medicine.medicineTime!.minute,
+      );
 
-        int currentWeekday = candidate.weekday;
-        int daysUntilNext = (weekday - currentWeekday + 7) % 7;
+      if (nearestTime == null || candidate.isBefore(nearestTime)) {
+        nearestTime = candidate;
+        nextMedicine = medicine;
+      }
 
-        if (daysUntilNext == 0 && candidate.isBefore(now)) {
-          daysUntilNext = 7;
-        }
+      candidate = candidate.add(Duration(days: 1));
 
-        candidate = candidate.add(Duration(days: daysUntilNext));
-
-        if (nearestTime == null || candidate.isBefore(nearestTime)) {
-          nearestTime = candidate;
-          nextAlarm = medicine;
-        }
+      if (nearestTime == null || candidate.isBefore(nearestTime)) {
+        nearestTime = candidate;
+        nextMedicine = medicine;
       }
     }
 
-    return (nextAlarm != null && nearestTime != null)
-        ? MapEntry(nextAlarm, nearestTime)
+    return (nextMedicine != null && nearestTime != null)
+        ? MapEntry(nextMedicine, nearestTime)
         : null;
   }
 
@@ -248,9 +256,6 @@ class MedicineModel {
     for (final medicine in medicines) {
       if (!medicine.isEnabled || medicine.medicineTime == null) continue;
 
-      // Only consider if today is one of the selected weekdays
-      // if (!medicine.medicineWeekdays.contains(now.weekday)) continue;
-
       final scheduledTime = DateTime(
         now.year,
         now.month,
@@ -259,7 +264,6 @@ class MedicineModel {
         medicine.medicineTime!.minute,
       );
 
-      // Count only if scheduled time is still ahead
       if (scheduledTime.isAfter(now)) {
         count++;
       }

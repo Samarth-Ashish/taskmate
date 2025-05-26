@@ -60,27 +60,43 @@ class CustomAppBarState extends State<CustomAppBar> {
             onTap:
                 widget.onTap ??
                 () {
-                  if (_pageToPush != null) {
-                    setState(() {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => _pageToPush!),//
-                      );
+                  if (_pageToPush != null &&
+                      (_pageToPush.runtimeType != this.runtimeType)) {
+                    debugPrint('==========Pushing page==========');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => _pageToPush!), //
+                    ).then((_) {
+                      // Called after PageB is popped
+                      setState(() {
+                        debugPrint(
+                          '==========Returned from pushed page==========',
+                        );
+                      });
                     });
                   }
                 },
             child: Container(
-              padding: EdgeInsets.all(4),
+              padding: EdgeInsets.all(5),
+              margin: EdgeInsets.only(right: 4),
               decoration: BoxDecoration(
-                color: Color(0xFF47ADFC),
-                borderRadius: BorderRadius.circular(20),
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: 0.85,
+                  colors: [
+                    Color.fromARGB(255, 93, 204, 255),
+                    Color.fromARGB(255, 0, 160, 247),
+                  ],
+                  stops: [0.0, 1.0],
+                ),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: _addText
                   ? Row(
                       children: [
                         Icon(_icon, color: Color.fromARGB(255, 0, 68, 170)),
                         SizedBox(width: 4),
-                        lilitaOneSmall(),
+                        lilitaOneAddText(),
                         SizedBox(width: 8),
                       ],
                     )

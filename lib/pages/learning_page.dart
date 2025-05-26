@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:taskmate/models/learning.module.dart';
-import 'package:taskmate/models/learning.module.dart';
+import 'package:taskmate/models/medicine.module.dart';
+import 'package:taskmate/utils/snackbar_utils.dart';
 import 'package:taskmate/views/texts.dart';
 
 class LearningPage extends StatefulWidget {
@@ -12,7 +12,7 @@ class LearningPage extends StatefulWidget {
 }
 
 class _LearningPageState extends State<LearningPage> {
-  late List<LearningModel> _subjects = [];
+  late List<Subject> _subjects = [];
 
   @override
   void initState() {
@@ -21,7 +21,7 @@ class _LearningPageState extends State<LearningPage> {
   }
 
   Future<void> _loadSubjects() async {
-    final subjects = await LearningModel.loadSubjects();
+    final subjects = await Subject.loadSubjects();
     setState(() {
       _subjects = subjects;
     });
@@ -35,20 +35,20 @@ class _LearningPageState extends State<LearningPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.book_online_outlined,
+                  Icons.menu_book,
                   size: 64,
-                  color: Theme.of(context).primaryColor,
+                  color: Color.fromARGB(255, 0, 99, 175),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'No subjects set',
-                  style: Theme.of(context).textTheme.titleLarge,
+                manjariSmall(
+                  'No study sessions added',
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tap + to add an subject',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                // const SizedBox(height: 8),
+                // Text(
+                //   'Tap + to add an subject',
+                //   style: Theme.of(context).textTheme.bodyMedium,
+                // ),
               ],
             ),
           )
@@ -66,29 +66,20 @@ class _LearningPageState extends State<LearningPage> {
                   padding: const EdgeInsets.only(right: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                onDismissed: (direction) async {
-                  await LearningModel.removeSubject(subject.id!);
-                  _subjects.removeAt(index);
+                
+                onDismissed: (direction) {
+                  final removedSubject = subject;
+
                   setState(() {
-                    subject.isEnabled = false;
+                    _subjects.removeWhere((a) => a.id == removedSubject.id);
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'LearningModel "${subject.subjectName}" deleted',
-                      ),
-                      action: SnackBarAction(
-                        label: 'UNDO',
-                        onPressed: () async {
-                          await LearningModel.addSubject(subject);
-                          _subjects.insert(index, subject);
-                          setState(() {
-                            subject.isEnabled = true;
-                          });
-                        },
-                      ),
-                    ),
-                  );
+
+                  Future.microtask(() async {
+                    await Subject.removeSubject(removedSubject.id);
+                    SnackbarUtil.showSnackbar(
+                      'Subject "${removedSubject.subjectName}" deleted',
+                    );
+                  });
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(6),
@@ -166,12 +157,12 @@ class _LearningPageState extends State<LearningPage> {
                                 setState(() {
                                   subject.isEnabled = !subject.isEnabled;
                                 });
-                                LearningModel.setLearningEnabled(
-                                  subject.id!,
+                                Subject.setSubjectEnabled(
+                                  subject.id,
                                   subject.isEnabled,
                                 );
                               },
-                              child: Text(subject.isEnabled ? 'Start' : 'Done'),
+                              child: Text(subject.isEnabled ? 'Start' : '✔️ Done'),
                             ),
                           ],
                         ),

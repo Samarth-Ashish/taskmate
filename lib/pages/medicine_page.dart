@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:taskmate/models/medicine.module.dart';
+import 'package:taskmate/utils/snackbar_utils.dart';
 import 'package:taskmate/views/texts.dart';
-import '../models/medicine.module.dart';
-import 'adders/add_meds_page.dart';
 
 class MedicinePage extends StatefulWidget {
   const MedicinePage({super.key});
@@ -13,7 +11,7 @@ class MedicinePage extends StatefulWidget {
 }
 
 class _MedicinePageState extends State<MedicinePage> {
-  late List<MedicineModel> _medicines = [];
+  late List<Medicine> _medicines = [];
 
   @override
   void initState() {
@@ -22,7 +20,7 @@ class _MedicinePageState extends State<MedicinePage> {
   }
 
   Future<void> _loadMedicines() async {
-    final medicines = await MedicineModel.loadMedicines();
+    final medicines = await Medicine.loadMedicines();
     setState(() {
       _medicines = medicines;
     });
@@ -38,18 +36,13 @@ class _MedicinePageState extends State<MedicinePage> {
                 Icon(
                   Icons.medication_outlined,
                   size: 64,
-                  color: Theme.of(context).primaryColor,
+                  color: Color.fromARGB(255, 0, 99, 175),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'No medicines set',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tap + to add an medicine',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+
+                manjariSmall('No medicines added', fontWeight: FontWeight.w600),
+                // const SizedBox(height: 8),
+                // manjariExtraSmall('Tap + to add a medicine'),
               ],
             ),
           )
@@ -67,30 +60,22 @@ class _MedicinePageState extends State<MedicinePage> {
                   padding: const EdgeInsets.only(right: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                onDismissed: (direction) async {
-                  await MedicineModel.removeMedicine(medicine.id!);
-                  _medicines.removeAt(index);
+
+                onDismissed: (direction) {
+                  final removedMedicine = medicine;
+
                   setState(() {
-                    medicine.isEnabled = false;
+                    _medicines.removeWhere((a) => a.id == removedMedicine.id);
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'MedicineModel "${medicine.medicineName}" deleted',
-                      ),
-                      action: SnackBarAction(
-                        label: 'UNDO',
-                        onPressed: () async {
-                          await MedicineModel.addMedicine(medicine);
-                          _medicines.insert(index, medicine);
-                          setState(() {
-                            medicine.isEnabled = true;
-                          });
-                        },
-                      ),
-                    ),
-                  );
+
+                  Future.microtask(() async {
+                    await Medicine.removeMedicine(removedMedicine.id);
+                    SnackbarUtil.showSnackbar(
+                      'Medicine "${removedMedicine.medicineName}" deleted',
+                    );
+                  });
                 },
+
                 child: Padding(
                   padding: const EdgeInsets.all(6),
                   child: Card(
@@ -99,32 +84,34 @@ class _MedicinePageState extends State<MedicinePage> {
                       horizontal: 16,
                       vertical: 4,
                     ),
-                    shadowColor: Colors.blue,
+                    shadowColor: const Color.fromARGB(255, 0, 116, 211),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          // Inner shadow
-                          // BoxShadow(
-                          //   color: Colors.blue.withOpacity(0.3),
-                          //   spreadRadius: 1,
-                          //   blurRadius: 5,
-                          //   offset: Offset(0, 2),
-                          // ),
-                          // Outer shadow
-                          // BoxShadow(
-                          //   color: Colors.blue.withOpacity(0.1),
-                          //   spreadRadius: -5,
-                          //   blurRadius: 2,
-                          //   offset: Offset(10, 10),
-                          // ),
-                        ],
+                        // boxShadow: [
+                        //   // Outer subtle shadow (optional)
+                        //   // BoxShadow(
+                        //   //   color: Colors.blue.shade100,
+                        //   //   blurRadius: 10,
+                        //   //   offset: const Offset(4, 4),
+                        //   // ),
+                        //   // Simulated inner shadow (top-left)
+                        //   const BoxShadow(
+                        //     color: Color.fromARGB(174, 0, 81, 139),
+                        //     blurRadius: 8,
+                        //     offset: Offset(-4, -4),
+                        //     spreadRadius: -8,
+                        //   ),
+                        //   // Simulated inner shadow (bottom-right)
+                        //   const BoxShadow(
+                        //     color: Color.fromARGB(255, 86, 196, 255),
+                        //     blurRadius: 6,
+                        //     offset: Offset(4, 4),
+                        //     spreadRadius: -2,
+                        //   ),
+                        // ],
                       ),
                       child: ListTile(
-                        // contentPadding: const EdgeInsets.symmetric(
-                        //   horizontal: 16,
-                        //   vertical: 8,
-                        // ),
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -139,16 +126,6 @@ class _MedicinePageState extends State<MedicinePage> {
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Text(
-                                //   _formatTime(
-                                //     medicine.alarmTime ??
-                                //         const TimeOfDay(hour: 0, minute: 0),
-                                //   ),
-                                //   style: const TextStyle(
-                                //     fontSize: 24,
-                                //     fontWeight: FontWeight.bold,
-                                //   ),
-                                // ),
                                 manjari(
                                   medicine.medicineName ?? "Medicine",
                                   fontSize: 32,
@@ -171,13 +148,13 @@ class _MedicinePageState extends State<MedicinePage> {
                                 setState(() {
                                   medicine.isEnabled = !medicine.isEnabled;
                                 });
-                                MedicineModel.setMedicineEnabled(
-                                  medicine.id!,
+                                Medicine.setMedicineEnabled(
+                                  medicine.id,
                                   medicine.isEnabled,
                                 );
                               },
                               child: Text(
-                                medicine.isEnabled ? 'Mark Taken' : 'Taken',
+                                medicine.isEnabled ? 'Mark Taken' : '✔️ Taken',
                               ),
                             ),
                           ],
@@ -204,18 +181,6 @@ class _MedicinePageState extends State<MedicinePage> {
                     ),
                   ),
                 ),
-                // child: Neumorphic(
-                //   style: NeumorphicStyle(
-                //     shape: NeumorphicShape.concave,
-                //     boxShape: NeumorphicBoxShape.roundRect(
-                //       BorderRadius.circular(12),
-                //     ),
-                //     depth: 8,
-                //     lightSource: LightSource.topLeft,
-                //     color: Colors.grey,
-                //   ),
-                //   child: Icon(Icons.medicine),
-                // ),
               );
             },
           );
