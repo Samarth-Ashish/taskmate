@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 
 final Shader appBarTextGradient = LinearGradient(
   colors: <Color>[
@@ -24,7 +24,19 @@ Widget lobsterAppBarText(String text) {
     blendMode: BlendMode.srcIn,
     child: Text(
       text,
-      style: GoogleFonts.lobster(
+      // style: GoogleFonts.lobster(
+      //   fontSize: 40,
+      //   color: Colors.white, // Required for ShaderMask to work correctly
+      //   shadows: [
+      //     Shadow(
+      //       color: const Color.fromARGB(255, 0, 45, 68),
+      //       offset: Offset(0, 2),
+      //       blurRadius: 4,
+      //     ),
+      //   ],
+      // ),
+      style: TextStyle(
+        fontFamily: 'Lobster',
         fontSize: 40,
         color: Colors.white, // Required for ShaderMask to work correctly
         shadows: [
@@ -42,7 +54,12 @@ Widget lobsterAppBarText(String text) {
 Text lilitaOneAddText() {
   return Text(
     'Add',
-    style: GoogleFonts.lilitaOne(
+    // style: GoogleFonts.lilitaOne(
+    //   fontSize: 18,
+    //   color: const Color.fromARGB(255, 0, 68, 170),
+    // ),
+    style: TextStyle(
+      fontFamily: 'Lilita One',
       fontSize: 18,
       color: const Color.fromARGB(255, 0, 68, 170),
     ),
@@ -57,7 +74,13 @@ Text manjari(
 }) {
   return Text(
     string,
-    style: GoogleFonts.manjari(
+    // style: GoogleFonts.manjari(
+    //   fontSize: fontSize,
+    //   fontWeight: fontWeight,
+    //   color: color,
+    // ),
+    style: TextStyle(
+      fontFamily: 'Manjari',
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -73,7 +96,13 @@ Text manjariSmall(
 }) {
   return Text(
     string,
-    style: GoogleFonts.manjari(
+    // style: GoogleFonts.manjari(
+    //   fontSize: fontSize,
+    //   fontWeight: fontWeight,
+    //   color: color,
+    // ),
+    style: TextStyle(
+      fontFamily: 'Manjari',
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -89,7 +118,13 @@ Text manjariExtraSmall(
 }) {
   return Text(
     string,
-    style: GoogleFonts.manjari(
+    // style: GoogleFonts.manjari(
+    //   fontSize: fontSize,
+    //   fontWeight: fontWeight,
+    //   color: color,
+    // ),
+    style: TextStyle(
+      fontFamily: 'Manjari',
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -100,12 +135,18 @@ Text manjariExtraSmall(
 Text mada(
   String string, {
   double fontSize = 30,
-  FontWeight fontWeight = FontWeight.w500,
+  FontWeight fontWeight = FontWeight.w600,
   Color color = const Color.fromARGB(255, 5, 131, 195),
 }) {
   return Text(
     string,
-    style: GoogleFonts.mada(
+    // style: GoogleFonts.mada(
+    //   fontSize: fontSize,
+    //   fontWeight: fontWeight,
+    //   color: color,
+    // ),
+    style: TextStyle(
+      fontFamily: 'Mada',
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,

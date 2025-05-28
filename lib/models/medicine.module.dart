@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:taskmate/notif_callbacks/medicine_callback.dart';
+import 'package:taskmate/callbacks/notif_callbacks/medicine_callback.dart';
 
 class Medicine {
   int id;
@@ -88,6 +88,21 @@ class Medicine {
     }
   }
 
+  static Future<String?> getMedicineQuantityById(int id) async {
+    debugPrint("---------- Getting medicine quantity by ID $id ----------");
+    final medicines = await loadMedicines();
+    debugPrint(
+      "---------- Current Medicines: ${medicines.map((a) => a.id).join(', ')} ----------",
+    );
+    try {
+      final medicine = medicines.firstWhere((a) => a.id == id);
+      return medicine.medicineQuantity;
+    } catch (e) {
+      // debugPrint("No medicine found for the given ID");
+      return null;
+    }
+  }
+
   static const _key = 'medicines';
 
   static Future<void> saveMedicines(List<Medicine> medicines) async {
@@ -140,6 +155,11 @@ class Medicine {
     for (var a in medicines) {
       if (a.id == id) {
         a.isEnabled = enabled;
+        if (enabled) {
+          await a.schedule();
+        } else {
+          await a.cancel();
+        }
         break;
       }
     }
@@ -180,11 +200,12 @@ class Medicine {
       medicineCallback,
       startAt: DateTime.now().add(duration),
       exact: true,
+      allowWhileIdle: true,
       wakeup: true,
     );
 
     debugPrint(
-      "Scheduled repeating medicine '$id' everyday at ${getNextUpcomingMedicineWithTime()}",
+      "Scheduled repeating medicine '$id' everyday at ${getNextUpcomingMedicine()}",
     );
   }
 
@@ -192,6 +213,18 @@ class Medicine {
   Future<void> cancel() async {
     int medicineId = id;
     await AndroidAlarmManager.cancel(medicineId);
+  }
+
+  static Future<void> removeAllMedicines() async {
+    final medicines = await loadMedicines();
+
+    for (var medicine in medicines) {
+      await removeMedicine(medicine.id);
+    }
+
+    await saveMedicines([]);
+
+    debugPrint('All medicines removed');
   }
 
   static Future<void> syncMedicinesWithSystem() async {
@@ -210,42 +243,35 @@ class Medicine {
     debugPrint('Medicines synchronized with system');
   }
 
-  static Future<MapEntry<Medicine, DateTime>?>
-  getNextUpcomingMedicineWithTime() async {
-    final medicines = await loadMedicines();
+  static Future<Medicine?> getNextUpcomingMedicine() async {
+    final medicines = await loadMedicines(); // Load all medicines
     final now = DateTime.now();
     DateTime? nearestTime;
     Medicine? nextMedicine;
 
-    for (var medicine in medicines) {
-      if (!medicine.isEnabled || medicine.medicineTime == null) {
-        continue;
-      }
+    for (final med in medicines) {
+      if (!med.isEnabled || med.medicineTime == null) continue;
 
+      // Scheduled time today
       DateTime candidate = DateTime(
         now.year,
         now.month,
         now.day,
-        medicine.medicineTime!.hour,
-        medicine.medicineTime!.minute,
+        med.medicineTime!.hour,
+        med.medicineTime!.minute,
       );
 
+      // If time has passed for today, move to tomorrow
+      if (candidate.isBefore(now)) continue;
+
+      // Track nearest one
       if (nearestTime == null || candidate.isBefore(nearestTime)) {
         nearestTime = candidate;
-        nextMedicine = medicine;
-      }
-
-      candidate = candidate.add(Duration(days: 1));
-
-      if (nearestTime == null || candidate.isBefore(nearestTime)) {
-        nearestTime = candidate;
-        nextMedicine = medicine;
+        nextMedicine = med;
       }
     }
 
-    return (nextMedicine != null && nearestTime != null)
-        ? MapEntry(nextMedicine, nearestTime)
-        : null;
+    return nextMedicine;
   }
 
   static Future<int> getRemainingMedicinesCount() async {

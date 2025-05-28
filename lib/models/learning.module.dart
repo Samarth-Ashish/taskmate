@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:taskmate/notif_callbacks/learning_callback.dart';
+import 'package:taskmate/callbacks/notif_callbacks/learning_callback.dart';
 
 class Subject {
   int id;
@@ -139,6 +139,11 @@ class Subject {
     for (var a in subjects) {
       if (a.id == id) {
         a.isEnabled = enabled;
+        if (enabled) {
+          await a.schedule();
+        } else {
+          await a.cancel();
+        }
         break;
       }
     }
@@ -172,6 +177,7 @@ class Subject {
       studySessionCallback,
       startAt: DateTime.now().add(duration),
       exact: true,
+      allowWhileIdle: true,
       wakeup: true,
     );
 
@@ -186,7 +192,7 @@ class Subject {
     await AndroidAlarmManager.cancel(subjectSessionID);
   }
 
-  static Future<void> syncLearningWithSystem() async {
+  static Future<void> syncSubjectWithSystem() async {
     final subjects = await loadSubjects();
 
     for (var subjectSession in subjects) {
@@ -202,48 +208,48 @@ class Subject {
     debugPrint('Learning synchronized with system');
   }
 
-  static Future<MapEntry<Subject, DateTime>?>
-  getNextUpcomingSubjectWithTime() async {
-    final subjectSessions = await loadSubjects();
+  static Future<void> removeAllSubjects() async {
+    final subjects = await loadSubjects();
+
+    for (var subjectSession in subjects) {
+      await removeSubject(subjectSession.id);
+    }
+
+    await saveSubjects([]);
+
+    debugPrint('All subjects removed');
+  }
+
+  static Future<Subject?> getNextUpcomingSubject() async {
+    final subjects = await loadSubjects(); // Load all subjects
     final now = DateTime.now();
     DateTime? nearestTime;
-    Subject? nextSubjectSession;
+    Subject? nextSubject;
 
-    for (final subjectSession in subjectSessions) {
-      if (!subjectSession.isEnabled ||
-          subjectSession.studyTime == null ||
-          subjectSession.studyWeekdays.isEmpty) {
-        continue;
-      }
+    for (final subject in subjects) {
+      if (!subject.isEnabled || subject.studyTime == null) continue;
 
-      for (final weekday in subjectSession.studyWeekdays) {
-        DateTime candidate = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          subjectSession.studyTime!.hour,
-          subjectSession.studyTime!.minute,
-        );
+      // Scheduled time today
+      DateTime candidate = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        subject.studyTime!.hour,
+        subject.studyTime!.minute,
+      );
 
-        int currentWeekday = candidate.weekday;
-        int daysUntilNext = (weekday - currentWeekday + 7) % 7;
+      // If time has passed for today, move to tomorrow
+      if (candidate.isBefore(now)) continue;
 
-        if (daysUntilNext == 0 && candidate.isBefore(now)) {
-          daysUntilNext = 7;
-        }
 
-        candidate = candidate.add(Duration(days: daysUntilNext));
-
-        if (nearestTime == null || candidate.isBefore(nearestTime)) {
-          nearestTime = candidate;
-          nextSubjectSession = subjectSession;
-        }
+      // Track nearest one
+      if (nearestTime == null || candidate.isBefore(nearestTime)) {
+        nearestTime = candidate;
+        nextSubject = subject;
       }
     }
 
-    return (nextSubjectSession != null && nearestTime != null)
-        ? MapEntry(nextSubjectSession, nearestTime)
-        : null;
+    return nextSubject;
   }
 
   static Future<int> getRemainingStudySessionsCount() async {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:taskmate/main.dart';
 import 'package:taskmate/views/custom_app_bar.dart';
 import 'package:taskmate/views/gradient_body.dart';
 import 'main_pages/home_page.dart';
@@ -9,6 +11,7 @@ import 'main_pages/medicine_page.dart';
 import 'adders/add_alarm_page.dart';
 import 'adders/add_meds_page.dart';
 import 'adders/add_learning_page.dart';
+import 'adders/settings_page.dart';
 
 class DefaultNavPage extends StatefulWidget {
   const DefaultNavPage({super.key});
@@ -49,12 +52,23 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
   @override
   void initState() {
     super.initState();
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   requestExactAlarmPermission();
+    // });
     _appBars = [
       CustomAppBar(
-        // pageToPush: ProfilePage(),
+        pageToPush: SettingsPage(),
         addText: false,
-        actionIcon: Icons.person,
+        actionIcon: Icons.settings,
         customTitle: 'Home',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SettingsPage()),
+          ).then((_) {
+            _homePageKey.currentState?.refresh();
+          });
+        },
       ),
       CustomAppBar(
         pageToPush: AddAlarmPage(),
@@ -71,9 +85,8 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         },
       ),
       CustomAppBar(
-        // pageToPush: SleepStatsPage(),
         addText: false,
-        actionIcon: Icons.nightlight_round,
+        // actionIcon: Icons.nightlight_round,
         customTitle: 'Sleep',
       ),
       CustomAppBar(
@@ -121,29 +134,88 @@ class _DefaultNavPageState extends State<DefaultNavPage> {
         unselectedItemColor: const Color.fromARGB(255, 0, 0, 0),
         showSelectedLabels: true,
         showUnselectedLabels: false,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            // icon: Icon(Icons.home_filled),
+            icon: SvgPicture.asset(
+              'assets/icons/house-solid.svg',
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                _selectedIndex == 0
+                    ? const Color.fromARGB(255, 0, 116, 211)
+                    : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
             label: 'Home', //
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.alarm),
+            // icon: Icon(Icons.alarm),
+            icon: SvgPicture.asset(
+              'assets/icons/clock-solid.svg',
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                _selectedIndex == 1
+                    ? const Color.fromARGB(255, 0, 116, 211)
+                    : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
             label: 'Alarms', //
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.nightlight_round),
+            // icon: Icon(Icons.nightlight_round),
+            icon: SvgPicture.asset(
+              'assets/icons/moon-solid.svg',
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                _selectedIndex == 2
+                    ? const Color.fromARGB(255, 0, 116, 211)
+                    : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
             label: 'Sleep',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.medication_outlined),
+            // icon: Icon(Icons.medication_outlined),
+            icon: SvgPicture.asset(
+              'assets/icons/pills-solid.svg',
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                _selectedIndex == 3
+                    ? const Color.fromARGB(255, 0, 116, 211)
+                    : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
             label: 'Medicine',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
+            // icon: Icon(Icons.menu_book),
+            icon: SvgPicture.asset(
+              'assets/icons/book-open-solid.svg',
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                _selectedIndex == 4
+                    ? const Color.fromARGB(255, 0, 116, 211)
+                    : Colors.black,
+                BlendMode.srcIn,
+              ),
+            ),
             label: 'Learning',
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _homePageKey.currentState?.dispose();
+    _alarmPageKey.currentState?.dispose();
+    _medicinePageKey.currentState?.dispose();
+    _learningPageKey.currentState?.dispose();
+    super.dispose();
   }
 }

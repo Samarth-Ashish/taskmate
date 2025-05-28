@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskmate/main.dart';
 import 'package:taskmate/models/alarm.module.dart';
-import 'package:taskmate/models/learning.module.dart';
 
 @pragma('vm:entry-point')
-void studySessionCallback(int id) async {
+void alarmCallback(int id) async {
   if (id == 0) {
     debugPrint('========================');
     debugPrint('====== INITIATED! ======');
@@ -13,39 +13,42 @@ void studySessionCallback(int id) async {
     return;
   }
   debugPrint('============================');
-  debugPrint('======Alarm triggered!======');
+  debugPrint('====== Alarm $id triggered!======');
   debugPrint('============================');
 
-  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  final prefs = await SharedPreferences.getInstance();
+  final isSoundEnabled = prefs.getBool('soundEnabled') ?? true;
+
+  final AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails(
-        'study_channel_id',
-        'Study Notifications',
-        channelDescription: 'Channel for background study notifications',
+        'alarm_channel_id',
+        'Alarm Notifications',
+        channelDescription: 'Channel for background alarm notifications',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
+        playSound: isSoundEnabled,
         enableVibration: true,
-        ticker: 'Study Session',
+        ticker: 'Alarm',
       );
 
-  const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  final NotificationDetails platformChannelSpecifics = NotificationDetails(
     android: androidPlatformChannelSpecifics,
   );
 
   String? title;
   for (int i = -7; i <= 7; i++) {
-    title = await Subject.getSubjectTitleById(id + i);
+    title = await Alarm.getAlarmTitleById(id + i);
     if (title != null) {
-      debugPrint("Subject title: $title found");
+      debugPrint("Alarm title: $title found");
       break;
     } else {
-      // debugPrint("No subject found for the given ID");
+      //
     }
   }
 
   await flutterLocalNotificationsPlugin.show(
     id,
-    'Study Session : $title',
+    'ALARM',
     title,
     platformChannelSpecifics,
   );

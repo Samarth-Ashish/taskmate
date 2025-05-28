@@ -73,7 +73,6 @@ class AlarmPageState extends State<AlarmPage> {
                     );
                   });
                 },
-
                 child: Padding(
                   padding: const EdgeInsets.all(6),
                   child: Card(
@@ -106,7 +105,7 @@ class AlarmPageState extends State<AlarmPage> {
                                 ),
                                 manjari(
                                   alarm.title ?? ' ',
-                                  fontSize: 18,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ],
@@ -116,7 +115,12 @@ class AlarmPageState extends State<AlarmPage> {
                               value: alarm.isEnabled,
                               activeColor: Color.fromARGB(255, 113, 186, 243),
                               activeTrackColor: Color(0xFF1776BF),
-                              inactiveTrackColor: Color(0xFF86D0FF),
+                              inactiveTrackColor: Color.fromARGB(
+                                0,
+                                134,
+                                209,
+                                255,
+                              ),
                               onChanged: (bool value) {
                                 setState(() {
                                   alarm.isEnabled = value;
@@ -157,7 +161,10 @@ class AlarmPageState extends State<AlarmPage> {
   }
 
   String _formatTime(TimeOfDay time) {
-    final hour = (time.hour % 12).toString().padLeft(2, '0');
+    final hour = (time.hour % 12 == 0 ? 12 : time.hour % 12).toString().padLeft(
+      2,
+      '0',
+    );
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute ${time.hour < 12 ? 'AM' : 'PM'}';
   }
@@ -167,8 +174,31 @@ class AlarmPageState extends State<AlarmPage> {
     if (weekdays.length == 7) return 'Every day';
 
     final weekDayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final selectedDays = weekdays.map((day) => weekDayNames[day - 1]).toList();
+    weekdays.sort(); // ensure order
 
-    return selectedDays.join(', ');
+    List<String> result = [];
+    int start = weekdays[0];
+    int end = start;
+
+    for (int i = 1; i < weekdays.length; i++) {
+      if (weekdays[i] == end + 1) {
+        end = weekdays[i];
+      } else {
+        result.add(_formatRange(start, end, weekDayNames));
+        start = weekdays[i];
+        end = start;
+      }
+    }
+    result.add(_formatRange(start, end, weekDayNames));
+
+    return result.join(', ');
+  }
+
+  String _formatRange(int start, int end, List<String> names) {
+    if (start == end) {
+      return names[start - 1];
+    } else {
+      return '${names[start - 1]}-${names[end - 1]}';
+    }
   }
 }

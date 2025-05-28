@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskmate/main.dart';
 import 'package:taskmate/models/medicine.module.dart';
 
@@ -12,40 +13,45 @@ void medicineCallback(int id) async {
     return;
   }
   debugPrint('============================');
-  debugPrint('======Medicine triggered!======');
+  debugPrint('====== Medicine $id triggered!======');
   debugPrint('============================');
 
-  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  final prefs = await SharedPreferences.getInstance();
+  final isSoundEnabled = prefs.getBool('soundEnabled') ?? true;
+
+  final AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails(
         'medicine_channel_id',
         'Medical Notifications',
         channelDescription: 'Channel for background medical notifications',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
+        playSound: isSoundEnabled,
         enableVibration: true,
         ticker: 'Medicine',
       );
 
-  const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  final NotificationDetails platformChannelSpecifics = NotificationDetails(
     android: androidPlatformChannelSpecifics,
   );
 
   String? title;
+  String? quantity;
   for (int i = -7; i <= 7; i++) {
     title = await Medicine.getMedicineTitleById(id + i);
-    if (title != null) {
-      debugPrint("Alarm title: $title found");
+    quantity = await Medicine.getMedicineQuantityById(id + i);
+    if (title != null && quantity != null) {
+      debugPrint("Medicine title: $title found");
       break;
     } else {
-      // debugPrint("No alarm found for the given ID");
+      //
     }
   }
 
   await flutterLocalNotificationsPlugin.show(
     id,
-    'Medicine Reminder : $title',
-    title,
+    'MEDICINE REMINDER',
+    '$title ($quantity)',
     platformChannelSpecifics,
   );
 }

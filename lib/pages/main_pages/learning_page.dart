@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:taskmate/models/learning.module.dart';
 import 'package:taskmate/models/medicine.module.dart';
 import 'package:taskmate/utils/snackbar_utils.dart';
@@ -118,7 +119,15 @@ class LearningPageState extends State<LearningPage> {
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.book, size: 40, color: Colors.blue),
+                            // Icon(Icons.book, size: 40, color: Colors.blue),
+                            SvgPicture.asset(
+                              'assets/icons/book-open-solid.svg',
+                              height: 40,
+                              colorFilter: ColorFilter.mode(
+                                Colors.blue,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                             SizedBox(width: 16),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,7 +145,7 @@ class LearningPageState extends State<LearningPage> {
                                 //   ),
                                 // ),
                                 manjari(
-                                  subject.subjectName ?? "Medicine",
+                                  subject.subjectName ?? "Subject",
                                   fontSize: 32,
                                 ),
                                 manjari(
@@ -163,7 +172,7 @@ class LearningPageState extends State<LearningPage> {
                                 );
                               },
                               child: Text(
-                                subject.isEnabled ? 'Mark Done' : '✔️ Done',
+                                subject.isEnabled ? 'Mark Studied' : '✔️ Studied',
                               ),
                             ),
                           ],
@@ -180,7 +189,7 @@ class LearningPageState extends State<LearningPage> {
                                         const TimeOfDay(hour: 0, minute: 0),
                                   ),
                                   fontSize: 22,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ],
                             ),
@@ -208,7 +217,10 @@ class LearningPageState extends State<LearningPage> {
   }
 
   String _formatTime(TimeOfDay time) {
-    final hour = (time.hour % 12).toString().padLeft(2, '0');
+    final hour = (time.hour % 12 == 0 ? 12 : time.hour % 12).toString().padLeft(
+      2,
+      '0',
+    );
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute ${time.hour < 12 ? 'AM' : 'PM'}';
   }

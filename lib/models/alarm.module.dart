@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:taskmate/notif_callbacks/alarm_callback.dart';
+import 'package:taskmate/callbacks/notif_callbacks/alarm_callback.dart';
 
 class Alarm {
   int id;
@@ -133,6 +133,11 @@ class Alarm {
     for (var a in alarms) {
       if (a.id == id) {
         a.isEnabled = enabled;
+        if (enabled) {
+          await a.schedule();
+        } else {
+          await a.cancel();
+        }
         break;
       }
     }
@@ -162,7 +167,7 @@ class Alarm {
       int alarmId = id + weekday; // Unique ID per weekday
 
       debugPrint(
-        "~~~~~~~~~~~~  Alarm will ring in ${duration.inHours} hours and ${duration.inMinutes} minutes and ${duration.inSeconds%60} seconds",
+        "~~~~~~~~~~~~  Alarm will ring in ${duration.inHours} hours and ${duration.inMinutes} minutes and ${duration.inSeconds % 60} seconds",
       );
       debugPrint(
         "~~~~~~~~~~~~  Alarm starts at ${DateTime.now().add(duration)}",
@@ -173,6 +178,7 @@ class Alarm {
         alarmCallback,
         startAt: DateTime.now().add(duration),
         exact: true,
+        allowWhileIdle: true,
         wakeup: true,
       );
 
@@ -193,12 +199,9 @@ class Alarm {
   static Future<void> syncAlarmsWithSystem() async {
     final alarms = await loadAlarms();
 
-    // Cancel all known alarms first
     for (var alarm in alarms) {
       await alarm.cancel();
     }
-
-    // Reschedule only enabled alarms
     for (var alarm in alarms) {
       if (alarm.isEnabled) {
         await alarm.schedule();
@@ -207,6 +210,20 @@ class Alarm {
 
     debugPrint('Alarms synchronized with system');
   }
+
+  
+  static Future<void> removeAllAlarms() async {
+    final alarms = await loadAlarms();
+
+    for (var alarm in alarms) {
+      await removeAlarm(alarm.id);
+    }
+
+    await saveAlarms([]);
+
+    debugPrint('All alarms removed');
+  }
+
 
   static Future<MapEntry<Alarm, DateTime>?>
   getNextUpcomingAlarmWithTime() async {

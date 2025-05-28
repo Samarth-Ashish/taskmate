@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:taskmate/models/medicine.module.dart';
 import 'package:taskmate/utils/snackbar_utils.dart';
 import 'package:taskmate/views/texts.dart';
@@ -117,10 +118,18 @@ class MedicinePageState extends State<MedicinePage> {
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.medication,
-                              size: 40,
-                              color: Colors.blue,
+                            // Icon(
+                            //   Icons.medication,
+                            //   size: 40,
+                            //   color: Colors.blue,
+                            // ),
+                            SvgPicture.asset(
+                              'assets/icons/pills-solid.svg',
+                              height: 40,
+                              colorFilter: ColorFilter.mode(
+                                Colors.blue,
+                                BlendMode.srcIn,
+                              ),
                             ),
                             SizedBox(width: 16),
                             Column(
@@ -142,6 +151,10 @@ class MedicinePageState extends State<MedicinePage> {
                             const Spacer(),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 backgroundColor: medicine.isEnabled
                                     ? const Color.fromARGB(255, 111, 190, 255)
                                     : const Color.fromARGB(255, 157, 211, 255),
@@ -173,7 +186,7 @@ class MedicinePageState extends State<MedicinePage> {
                                         const TimeOfDay(hour: 0, minute: 0),
                                   ),
                                   fontSize: 22,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ],
                             ),
@@ -189,7 +202,10 @@ class MedicinePageState extends State<MedicinePage> {
   }
 
   String _formatTime(TimeOfDay time) {
-    final hour = (time.hour % 12).toString().padLeft(2, '0');
+    final hour = (time.hour % 12 == 0 ? 12 : time.hour % 12).toString().padLeft(
+      2,
+      '0',
+    );
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute ${time.hour < 12 ? 'AM' : 'PM'}';
   }

@@ -216,10 +216,7 @@ class _TimeSelectorState extends State<TimeSelector> {
               onPressed: _addAndScheduleMedicine,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue[800],
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.all(12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -227,7 +224,7 @@ class _TimeSelectorState extends State<TimeSelector> {
               child: const Text(
                 'Add Medicine',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
